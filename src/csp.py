@@ -22,6 +22,11 @@ class MyCSP(BaseEstimator, TransformerMixin):
     log : bool, default=True
         Apply ``log`` to the band-power features. Recommended for linear
         classifiers.
+    reg : float or None, default=None
+        Shrinkage coefficient in [0, 1] applied to each class covariance:
+        ``(1 - reg) * cov + reg * mean(diag(cov)) * I``. Use a small value
+        (e.g. 0.01) when the data is rank-deficient — average referencing,
+        interpolated channels, or fewer samples than channels.
 
     Attributes
     ----------
@@ -32,11 +37,15 @@ class MyCSP(BaseEstimator, TransformerMixin):
     classes_ : ndarray, shape (2,)
         The two class labels found in ``y``, sorted ascending. Leading
         filters maximise variance for ``classes_[0]``.
+    patterns_ : ndarray, shape (n_channels, n_channels)
+        Spatial patterns as rows — how each component projects onto the
+        scalp. These, not the filters, are what you plot as topomaps.
     """
 
-    def __init__(self, n_components=4, log=True):
-        self.n_components = n_components  # number of components to keep
-        self.log = log                    # log-variance features
+    def __init__(self, n_components=4, log=True, reg=None):
+        self.n_components = n_components
+        self.log = log
+        self.reg = reg
 
     def _covariance(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
@@ -59,6 +68,8 @@ class MyCSP(BaseEstimator, TransformerMixin):
         n_channels = X.shape[1]
         Z = X.transpose(1, 0, 2).reshape(n_channels, -1)
         cov = np.matmul(Z, Z.T) / (Z.shape[1] - 1)
+        if self.reg is not None:
+            cov = (1 - self.reg) * cov + self.reg * np.trace(cov) / n_channels * np.eye(n_channels)
         return cov
 
     def fit(self, X: npt.NDArray[np.float64], y: npt.NDArray[np.int_]) -> "MyCSP":
@@ -101,6 +112,7 @@ class MyCSP(BaseEstimator, TransformerMixin):
         order = np.argsort(evals)[::-1]
         self.evals_ = evals[order]
         self.filters_ = evecs[:, order].T
+        self.patterns_ = np.linalg.pinv(evecs[:, order])
         return self
 
     def transform(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:

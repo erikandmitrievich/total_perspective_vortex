@@ -24,6 +24,7 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import ShuffleSplit, cross_val_score
 from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator, TransformerMixin
 
 from mne.datasets import eegbci
 from mne.decoding import CSP
@@ -82,10 +83,8 @@ def data():
 @pytest.fixture(scope="module")
 def fitted(data):
     X, y = data
-    mne_csp = CSP(n_components=N_COMPONENTS, reg=None, log=True,
-                  norm_trace=False).fit(X, y)
-    mine = MyCSP(n_components=N_COMPONENTS, reg=None, log=True,
-                 norm_trace=False).fit(X, y)
+    mne_csp = CSP(n_components=N_COMPONENTS, log=True).fit(X, y)
+    mine = MyCSP(n_components=N_COMPONENTS, log=True).fit(X, y)
     return mne_csp, mine, X, y
 
 
@@ -192,12 +191,9 @@ def test_accuracy_floor(data):
         clf = Pipeline([("CSP", estimator), ("LDA", LinearDiscriminantAnalysis())])
         return cross_val_score(clf, X, y, cv=cv).mean()
 
-    acc_alt = mean_acc(CSP(n_components=4, reg=None, log=True,
-                       norm_trace=False, component_order="alternate"))
-    acc_mne = mean_acc(CSP(n_components=N_COMPONENTS, reg=None, log=True,
-                           norm_trace=False))
-    acc_mine = mean_acc(MyCSP(n_components=N_COMPONENTS, reg=None, log=True,
-                              norm_trace=False))
+    acc_alt = mean_acc(CSP(n_components=4, log=True, component_order="alternate"))
+    acc_mne = mean_acc(CSP(n_components=N_COMPONENTS, log=True))
+    acc_mine = mean_acc(MyCSP(n_components=N_COMPONENTS, log=True))
     # assert abs(acc_mne - acc_mine) <= ACC_FLOOR_PTS, \
     #     f"accuracy gap {abs(acc_mne - acc_mine):.4f} > {ACC_FLOOR_PTS} " \
     #     f"(mne={acc_mne:.4f}, mine={acc_mine:.4f})"
