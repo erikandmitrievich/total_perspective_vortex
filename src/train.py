@@ -1,3 +1,87 @@
+from pathlib import Path
 
-def train(subject: int, run: int):
-    raise NotImplementedError
+import joblib
+import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import (StratifiedShuffleSplit, cross_val_score,
+                                     train_test_split)
+
+from sklearn.pipeline import Pipeline
+
+from src.csp import MyCSP
+from src.data import DEFAULT, PreprocConfig, load_dataset
+
+
+MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
+
+
+def model_path(subject: int, runs: list[int]) -> Path:
+    """Deterministic on-disk location for one fitted model."""
+    return MODELS_DIR / f"S{subject:03d}_R{'-'.join(map(str, runs))}.joblib"
+
+
+def make_pipeline(n_components: int = 4) -> Pipeline:
+    """
+    CSP -> LDA. Single definition; train and any future caller share it.
+    """
+    return Pipeline([
+        ("CSP", MyCSP(n_components=n_components)),
+        ("LDA", LinearDiscriminantAnalysis()),
+    ])
+
+
+def train(
+    subject: int,
+    runs: list[int],
+    config: PreprocConfig = DEFAULT,
+    *,
+    test_size: float = 0.2,
+    n_splits: int = 10,
+    seed: int = 42,
+    verbose: bool = True,
+) -> float:
+    """Fit and persist a model for one subject/run set.
+
+    Holds out a stratified test partition, cross-validates the whole
+    pipeline on the remainder, refits on the remainder, and writes the
+    fitted estimator plus everything ``predict`` needs to reproduce the
+    split.
+
+    Returns
+    -------
+    cv_mean : float
+        Mean cross-validation accuracy on the training partition. Not a
+        generalisation estimate — that is ``predict``'s job.
+    """
+    X, y, _ = load_dataset(subject, runs, config)
+
+    idx = np.arange(len(y))
+    train_idx, test_idx = train_test_split(
+        idx, test_size=test_size, stratify=y, random_state=seed
+    )
+
+    clf = make_pipeline()
+
+    cv = StratifiedShuffleSplit(n_splits, test_size=test_size, random_state=seed)
+    scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=cv)
+    clf.fit(X[train_idx], y[train_idx])
+
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(
+        {
+            "pipeline": clf,
+            "config": config,        # predict must preprocess identically
+            "subject": subject,
+            "runs": runs,
+            "train_idx": train_idx,
+            "test_idx": test_idx,
+            "cv_scores": scores,
+        },
+        model_path(subject, runs),
+    )
+
+    if verbose:
+        print(np.array2string(scores, precision=4, floatmode="fixed"))
+        print(f"cross_val_score: {scores.mean():.4f}")
+    return float(scores.mean())
