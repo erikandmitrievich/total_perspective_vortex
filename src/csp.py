@@ -17,16 +17,15 @@ class MyCSP(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_components : int, default=4
-        Number of filters to keep. Must be even: ``n_components // 2`` are
-        taken from each end of the eigenvalue spectrum.
+        Number of filters to keep. Must be even — half are taken from each
+        end of the eigenvalue spectrum.
     log : bool, default=True
-        Apply ``log`` to the band-power features. Recommended for linear
+        Log-transform the band-power features. Recommended for linear
         classifiers.
     reg : float or None, default=None
         Shrinkage coefficient in [0, 1] applied to each class covariance:
         ``(1 - reg) * cov + reg * mean(diag(cov)) * I``. Use a small value
-        (e.g. 0.01) when the data is rank-deficient — average referencing,
-        interpolated channels, or fewer samples than channels.
+        (e.g. 0.01) when the data is rank-deficient.
 
     Attributes
     ----------
@@ -35,11 +34,10 @@ class MyCSP(BaseEstimator, TransformerMixin):
     filters_ : ndarray, shape (n_channels, n_channels)
         Spatial filters as rows, ordered to match ``evals_``.
     classes_ : ndarray, shape (2,)
-        The two class labels found in ``y``, sorted ascending. Leading
-        filters maximise variance for ``classes_[0]``.
+        The two class labels, sorted ascending. Leading filters maximise
+        variance for ``classes_[0]``.
     patterns_ : ndarray, shape (n_channels, n_channels)
-        Spatial patterns as rows — how each component projects onto the
-        scalp. These, not the filters, are what you plot as topomaps.
+        Spatial patterns as rows. Plot these, not the filters, as topomaps.
     """
 
     def __init__(self, n_components=4, log=True, reg=None):
@@ -51,8 +49,7 @@ class MyCSP(BaseEstimator, TransformerMixin):
         """
         Pooled spatial covariance across all epochs in X.
 
-        Concatenates epochs along time and computes the (n_channels, n_channels)
-        second-moment matrix. Assumes zero-mean (band-passed) signals; no
+        Concatenates epochs along time. Assumes zero-mean signals; no
         centering is performed.
 
         Parameters
@@ -63,7 +60,7 @@ class MyCSP(BaseEstimator, TransformerMixin):
         Returns
         -------
         cov : ndarray, shape (n_channels, n_channels)
-            Covariance matrix.
+            Covariance matrix, shrunk towards the identity if ``reg`` is set.
         """
         n_channels = X.shape[1]
         Z = X.transpose(1, 0, 2).reshape(n_channels, -1)
@@ -74,15 +71,12 @@ class MyCSP(BaseEstimator, TransformerMixin):
 
     def fit(self, X: npt.NDArray[np.float64], y: npt.NDArray[np.int_]) -> "MyCSP":
         """
-        Fit CSP spatial filters by solving a generalised eigenproblem.
+        Fit spatial filters by solving a generalised eigenproblem.
 
-        Computes the pooled covariance of each class and solves
-        ``S_0 w = lambda (S_0 + S_1) w``, where ``S_i`` is the covariance
-        of ``classes_[i]``, so eigenvalues lie in [0, 1] and give the
-        fraction of total variance a filter captures for ``classes_[0]``.
-        Filters are stored in descending eigenvalue order: leading rows
-        maximise variance for ``classes_[0]``, trailing rows for
-        ``classes_[1]``.
+        Solves ``S_0 w = lambda (S_0 + S_1) w``, where ``S_i`` is the pooled
+        covariance of ``classes_[i]``, so eigenvalues lie in [0, 1]. Filters
+        are stored in descending eigenvalue order: leading rows maximise
+        variance for ``classes_[0]``, trailing rows for ``classes_[1]``.
 
         Parameters
         ----------
@@ -96,6 +90,12 @@ class MyCSP(BaseEstimator, TransformerMixin):
         -------
         self : MyCSP
             Fitted estimator.
+
+        Raises
+        ------
+        ValueError
+            If ``n_components`` is odd, or ``y`` does not hold exactly two
+            distinct labels.
         """
         if self.n_components % 2 != 0:
             raise ValueError(f"n_components must be even, got {self.n_components}")
@@ -117,13 +117,11 @@ class MyCSP(BaseEstimator, TransformerMixin):
 
     def transform(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
-        Project epochs onto the selected CSP filters and extract band-power features.
+        Project epochs onto the selected filters and extract band power.
 
-        Takes the ``m`` filters most discriminative for each class (the extremes
-        of the eigenvalue spectrum), projects each epoch, and reduces each
-        projected component to its mean square over time — its power, since the
-        signals are assumed zero-mean. Optionally log-transformed to make the
-        distribution closer to Gaussian for downstream linear classifiers.
+        Uses ``n_components // 2`` filters from each end of the eigenvalue
+        spectrum and reduces each projected component to its mean square over
+        time — its power, since the signals are assumed zero-mean.
 
         Parameters
         ----------

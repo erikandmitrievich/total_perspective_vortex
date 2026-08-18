@@ -7,6 +7,28 @@ from src.sweep import run_full_sweep
 
 
 def parse_args(argv=None) -> argparse.Namespace:
+    """
+    Parse and validate the command-line interface.
+
+    ``subject``, ``run`` and ``mode`` form an all-or-nothing group: all three
+    select a single job, none selects the full sweep.
+
+    Parameters
+    ----------
+    argv : list of str or None, default=None
+        Argument list to parse. ``None`` defers to ``sys.argv[1:]``.
+
+    Returns
+    -------
+    args : argparse.Namespace
+        Holds ``subject``, ``run`` and ``mode`` — either all set or all None.
+
+    Raises
+    ------
+    SystemExit
+        On a partially filled group, ``subject`` outside 1-109, or an invalid
+        ``mode``. ``run`` is not range-checked here.
+    """
     parser = argparse.ArgumentParser(prog="mybci.py")
     parser.add_argument("subject", type=int, nargs="?", default=None,
                         help="Subject number (1-109)")
@@ -28,6 +50,17 @@ def parse_args(argv=None) -> argparse.Namespace:
 
 
 def main(argv=None):
+    """
+    Entry point: dispatch to sweep, training or prediction.
+
+    Runs the full sweep when no arguments are given, otherwise trains or
+    predicts on the requested subject/run pair.
+
+    Parameters
+    ----------
+    argv : list of str or None, default=None
+        Argument list forwarded to ``parse_args``.
+    """
     args = parse_args(argv)
     if args.subject is None:
         run_full_sweep()
