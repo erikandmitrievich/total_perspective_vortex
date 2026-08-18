@@ -40,12 +40,17 @@ class MyCSP(BaseEstimator, TransformerMixin):
         Spatial patterns as rows. Plot these, not the filters, as topomaps.
     """
 
-    def __init__(self, n_components=4, log=True, reg=None):
+    def __init__(self,
+                 n_components=4,
+                 log=True,
+                 reg=None):
         self.n_components = n_components
         self.log = log
         self.reg = reg
 
-    def _covariance(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def _covariance(self,
+                    X: npt.NDArray[np.float64]
+                    ) -> npt.NDArray[np.float64]:
         """
         Pooled spatial covariance across all epochs in X.
 
@@ -69,7 +74,10 @@ class MyCSP(BaseEstimator, TransformerMixin):
             cov = (1 - self.reg) * cov + self.reg * np.trace(cov) / n_channels * np.eye(n_channels)
         return cov
 
-    def fit(self, X: npt.NDArray[np.float64], y: npt.NDArray[np.int_]) -> "MyCSP":
+    def fit(self,
+            X: npt.NDArray[np.float64],
+            y: npt.NDArray[np.int_]
+            ) -> "MyCSP":
         """
         Fit spatial filters by solving a generalised eigenproblem.
 
@@ -115,7 +123,9 @@ class MyCSP(BaseEstimator, TransformerMixin):
         self.patterns_ = np.linalg.pinv(evecs[:, order])
         return self
 
-    def transform(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def transform(self,
+                  X: npt.NDArray[np.float64]
+                  ) -> npt.NDArray[np.float64]:
         """
         Project epochs onto the selected filters and extract band power.
 
