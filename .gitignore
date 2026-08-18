@@ -18,8 +18,9 @@ __pycache__
 # personal
 _archive/
 
-# data
+# data & models
 data/
+models/
 
 # temporarily
 optimizing_spatial_filters_eeg.pdf
