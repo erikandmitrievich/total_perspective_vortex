@@ -4,6 +4,7 @@ import argparse
 from src.train import train
 from src.predict import predict
 from src.sweep import run_full_sweep
+from src.experiments import runs_for
 
 
 def parse_args(argv=None) -> argparse.Namespace:
@@ -65,9 +66,9 @@ def main(argv=None):
     if args.subject is None:
         run_full_sweep()
     elif args.mode == "train":
-        train(args.subject, args.run)
+        train(args.subject, runs_for(args.run))
     else:
-        predict(args.subject, args.run)
+        predict(args.subject, runs_for(args.run))
 
 
 if __name__ == "__main__":

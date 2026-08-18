@@ -27,8 +27,8 @@ from sklearn.pipeline import Pipeline
 
 from mne.decoding import CSP
 
-from csp import MyCSP
-from data import load_dataset, PreprocConfig
+from src.csp import MyCSP
+from src.data import load_dataset, PreprocConfig
 
 
 # ---- your implementation -----------------------------------------------------
