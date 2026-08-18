@@ -14,7 +14,7 @@ and be a scikit-learn transformer (BaseEstimator + TransformerMixin) so it can
 drop into the same Pipeline. If you name things differently, adjust the two
 getters below and nothing else.
 
-Run:  pytest -q test_csp.py
+Run:  pytest -q csp_test.py
 """
 
 import numpy as np
@@ -24,18 +24,15 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import ShuffleSplit, cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator, TransformerMixin
 
-from mne.datasets import eegbci
 from mne.decoding import CSP
-from mne.channels import make_standard_montage
-from mne.io import concatenate_raws, read_raw_edf
-from mne import Epochs, pick_types
 
 from csp import MyCSP
+from data import load_dataset, PreprocConfig
+
 
 # ---- your implementation -----------------------------------------------------
-# from mycsp import MyCSP           # <-- your CSP transformer
+# from csp import MyCSP               # <-- your CSP transformer
 # MyCSP = CSP
 # MyCSP = csp                         # placeholder so this file runs before yours
 # ------------------------------------------------------------------------------
@@ -44,39 +41,14 @@ N_COMPONENTS = 4
 FILTER_RTOL = 1e-6      # tighten to 1e-9 once you're confident
 EVAL_ATOL = 1e-6
 ACC_FLOOR_PTS = 0.01    # end-to-end accuracy must land within 1 point
-
+ORACLE_CONFIG = PreprocConfig()
 
 # ============================================================ fixtures ========
 
+
 @pytest.fixture(scope="module")
 def data():
-    """Single-subject, single-window array — the frozen baseline oracle.
-
-    ONE array feeds both CSPs. No crop-vs-full-window mismatch, no CV leakage
-    into the fit used for filter comparison.
-    """
-    subjects, runs = [1], [6, 10, 14]
-    fnames = eegbci.load_data(subjects, runs)
-    raw = concatenate_raws([read_raw_edf(f, preload=True) for f in fnames])
-
-    eegbci.standardize(raw)
-    raw.set_montage(make_standard_montage("standard_1005"))
-    raw.annotations.rename(dict(T1="hands", T2="feet"))
-    # raw.set_eeg_reference(projection=True)
-    raw.filter(7.0, 30.0, fir_design="firwin", skip_by_annotation="edge")
-
-    picks = pick_types(raw.info, meg=False, eeg=True, stim=False,
-                       eog=False, exclude="bads")
-    epochs = Epochs(raw, event_id=["hands", "feet"], tmin=-1.0, tmax=4.0,
-                    proj=True, picks=picks, baseline=None, preload=True)
-    epochs_train = epochs.copy().crop(tmin=1.0, tmax=2.0)
-
-    X = epochs_train.get_data(copy=False)
-    # NOTE: explicit event_id map, not the `- 2` magic offset. Both CSPs see the
-    # same y, so the offset can't cause a divergence — but wrong labels would
-    # silently invalidate the *meaning* of the whole check, so make it explicit.
-    y = epochs_train.events[:, -1]
-    y = np.where(y == epochs.event_id["hands"], 0, 1)
+    X, y, _ = load_dataset(subject=1, runs=[6, 10, 14], config=ORACLE_CONFIG)
     return X, y
 
 
@@ -198,5 +170,5 @@ def test_accuracy_floor(data):
     #     f"accuracy gap {abs(acc_mne - acc_mine):.4f} > {ACC_FLOOR_PTS} " \
     #     f"(mne={acc_mne:.4f}, mine={acc_mine:.4f})"
     assert abs(acc_alt - acc_mine) <= ACC_FLOOR_PTS, \
-        f"accuracy gap {abs(acc_mne - acc_mine):.4f} > {ACC_FLOOR_PTS} " \
+        f"accuracy gap {abs(acc_alt - acc_mine):.4f} > {ACC_FLOOR_PTS} " \
         f"(alt={acc_mne:.4f}, mine={acc_mine:.4f})"
