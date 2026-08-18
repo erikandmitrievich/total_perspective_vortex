@@ -1,46 +1,41 @@
 import sys
+import argparse
+
+from src.train import train
+from src.predict import predict
+from src.sweep import run_full_sweep
 
 
-def val_argv(argv):
-    if len(argv) == 1:
-        return {"run_all": True}
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="mybci.py")
+    parser.add_argument("subject", type=int, nargs="?", default=None,
+                        help="Subject number (1-109)")
+    parser.add_argument("run", type=int, nargs="?", default=None,
+                        help="Experiment/run number")
+    parser.add_argument("mode", choices=["train", "predict"], nargs="?", default=None,
+                        help="train or predict")
 
-    assert len(argv) == 4, "Usage: python mybci.py [subject_id] [task_id] [train/predict]"
+    args = parser.parse_args(argv)
 
-    try:
-        subj = int(argv[1])
-        task = int(argv[2])
-        mode = argv[3].lower()
+    given = [args.subject, args.run, args.mode]
+    if any(v is not None for v in given) and any(v is None for v in given):
+        parser.error("subject, run and mode must all be given together, or none at all")
 
-        assert mode in ['train', 'predict'], "Mode must be either 'train' or 'predict'"
+    if args.subject is not None and not (1 <= args.subject <= 109):
+        parser.error("subject must be between 1 and 109")
 
-        return {
-            "run_all": False,
-            "subject": subj,
-            "task": task,
-            "mode": mode
-        }
-    except ValueError:
-        raise AssertionError("Subject and task must be integers.")
+    return args
 
 
-def main():
-    try:
-        args = val_argv(sys.argv)
-    except AssertionError as err:
-        print(f"AssertionError: {err}")
-        return
-
-    if args.get("run_all"):
-        print("Running full evaluation across all subjects and experiments...")
-        # TODO: call general evaluation logic
+def main(argv=None):
+    args = parse_args(argv)
+    if args.subject is None:
+        run_full_sweep()
+    elif args.mode == "train":
+        train(args.subject, args.run)
     else:
-        print(f"Executing: Subject {args['subject']} | Task {args['task']} | Mode {args['mode']}")
-        if args['mode'] == 'train':
-            pass # TODO: call train.py logic
-        elif args['mode'] == 'predict':
-            pass # TODO: call predict.py logic
+        predict(args.subject, args.run)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
