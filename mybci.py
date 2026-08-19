@@ -6,6 +6,10 @@ from src.predict import predict
 from src.sweep import run_full_sweep
 from src.experiments import runs_for
 
+import mne
+
+mne.set_log_level("ERROR")
+
 
 def parse_args(argv=None) -> argparse.Namespace:
     """
