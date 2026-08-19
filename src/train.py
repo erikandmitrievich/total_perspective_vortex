@@ -15,14 +15,48 @@ from src.data import DEFAULT, PreprocConfig, load_dataset
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
 
-def model_path(subject: int, runs: list[int]) -> Path:
-    """Deterministic on-disk location for one fitted model."""
+def model_path(
+        subject: int,
+        runs: list[int]
+) -> Path:
+    """
+    Deterministic on-disk location for one fitted model.
+
+    Parameters
+    ----------
+    subject : int
+        Subject number, 1-109.
+    runs : list of int
+        Run numbers the model was fitted on. Part of the filename, so
+        different run groups never collide.
+
+    Returns
+    -------
+    path : Path
+        ``models/S{subject:03d}_R{runs}.joblib``. Not created here.
+    """
     return MODELS_DIR / f"S{subject:03d}_R{'-'.join(map(str, runs))}.joblib"
 
 
-def make_pipeline(n_components: int = 4) -> Pipeline:
+def make_pipeline(
+        n_components: int = 4
+) -> Pipeline:
     """
-    CSP -> LDA. Single definition; train and any future caller share it.
+    Build the CSP → LDA estimator.
+
+    Single definition of the pipeline: ``train``, ``predict`` and the sweep
+    must all instantiate it here so that no caller can drift on
+    hyperparameters.
+
+    Parameters
+    ----------
+    n_components : int, default=4
+        Number of spatial filters kept by ``MyCSP``. Must be even.
+
+    Returns
+    -------
+    clf : Pipeline
+        Unfitted estimator, clonable by ``cross_val_score``.
     """
     return Pipeline([
         ("CSP", MyCSP(n_components=n_components)),
@@ -40,18 +74,41 @@ def train(
     seed: int = 42,
     verbose: bool = True,
 ) -> float:
-    """Fit and persist a model for one subject/run set.
+    """
+    Fit and persist a model for one subject/run set.
 
     Holds out a stratified test partition, cross-validates the whole
     pipeline on the remainder, refits on the remainder, and writes the
     fitted estimator plus everything ``predict`` needs to reproduce the
-    split.
+    split. The test partition is never touched here.
+
+    Parameters
+    ----------
+    subject : int
+        Subject number, 1-109.
+    runs : list of int
+        Runs sharing one T1/T2 semantics, as returned by ``runs_for``.
+    config : PreprocConfig
+        Preprocessing parameters; persisted so ``predict`` can reproduce them.
+    test_size : float, default=0.2
+        Fraction held out, and the validation fraction of each CV split.
+    n_splits : int, default=10
+        Number of ``StratifiedShuffleSplit`` resamples.
+    seed : int, default=42
+        Seeds both the holdout split and the CV, making the run reproducible.
+    verbose : bool, default=True
+        Print the per-fold scores and their mean in the subject's format.
 
     Returns
     -------
     cv_mean : float
         Mean cross-validation accuracy on the training partition. Not a
         generalisation estimate — that is ``predict``'s job.
+
+    Side Effects
+    ------------
+    Creates ``MODELS_DIR`` and writes ``model_path(subject, runs)``,
+    overwriting any existing file.
     """
     X, y, _ = load_dataset(subject, runs, config)
 

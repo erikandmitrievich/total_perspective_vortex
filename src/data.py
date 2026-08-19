@@ -91,9 +91,6 @@ def make_epochs(
     picks = pick_types(filtered.info, meg=False, eeg=True,
                        stim=False, eog=False, exclude="bads")
 
-    # Derive events explicitly. Epochs(raw, event_id=dict) does NOT map
-    # descriptions -- it uses the default alphabetical codes and treats the
-    # dict values as a code filter, silently selecting T0 and T1.
     events, _ = mne.events_from_annotations(filtered, event_id=EVENT_ID)
 
     epochs = Epochs(
@@ -143,7 +140,8 @@ def load_dataset(
         *,
         path: Path | None = None,
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], mne.Epochs]:
-    """Load, preprocess, epoch and crop — the entry point every caller uses.
+    """
+    Load, preprocess, epoch and crop — the entry point every caller uses.
 
     Returns
     -------
