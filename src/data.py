@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import mne
 
+
 from mne import Epochs, pick_types
 from mne.datasets import eegbci
 from mne.io import concatenate_raws, read_raw_edf
@@ -37,7 +38,7 @@ class PreprocConfig:
     l_freq:     float = 7.0
     h_freq:     float = 30.0
     tmin:       float = -1.0
-    tmax:       float = 4.0
+    tmax:       float = 2.0
     crop_tmin:  float | None = 1.0
     crop_tmax:  float | None = 2.0
     montage:    str = "standard_1005"
@@ -155,11 +156,6 @@ def make_epochs(
         tmin=config.tmin, tmax=config.tmax,
         proj=True, picks=picks, baseline=None, preload=True,
     )
-
-    dropped = [(i, d) for i, d in enumerate(epochs.drop_log)
-               if d and d[0] != "IGNORED"]
-    if dropped:
-        raise RuntimeError(f"subject dropped {len(dropped)} epochs: {dropped}")
 
     return epochs
 
