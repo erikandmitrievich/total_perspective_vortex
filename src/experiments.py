@@ -1,5 +1,3 @@
-SUBJECTS = range(1, 110)
-
 CLASS_NAMES = {
     3:  ("left fist", "right fist"), 4:  ("left fist", "right fist"),
     5:  ("both fists", "both feet"), 6:  ("both fists", "both feet"),
@@ -9,7 +7,14 @@ CLASS_NAMES = {
     13: ("both fists", "both feet"), 14: ("both fists", "both feet"),
 }
 
-GROUPS = ([3, 7, 11], [4, 8, 12], [5, 9, 13], [6, 10, 14])
+GROUPS = (([3, 7, 11],  "left fist vs right fist (executed)"),
+          ([4, 8, 12],  "left fist vs right fist (imagined)"),
+          ([5, 9, 13],  "both fists vs both feet (executed)"),
+          ([6, 10, 14], "both fists vs both feet (imagined)"))
+
+EXCLUDED = {88, 89, 92, 100}          # non-160 Hz / bad annotations
+
+SUBJECTS = [s for s in range(1, 110) if s not in EXCLUDED]
 
 
 def runs_for(run: int) -> list[int]:
@@ -19,7 +24,8 @@ def runs_for(run: int) -> list[int]:
     T1/T2 mean different movements per group, so a group is the largest
     set that can be pooled into one binary problem.
     """
-    for g in GROUPS:
-        if run in g:
-            return g
-    raise ValueError(f"run {run} is not a motor-imagery run (valid: {sorted(sum(GROUPS, []))})")
+    for runs, _ in GROUPS:
+        if run in runs:
+            return runs
+    valid = sorted(r for runs, _ in GROUPS for r in runs)
+    raise ValueError(f"run {run} is not a motor-imagery run (valid: {valid})")

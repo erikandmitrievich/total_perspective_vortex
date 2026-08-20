@@ -8,18 +8,26 @@ from src.train import train
 def run_full_sweep():
     group_means = []
 
-    for exp, group in enumerate(GROUPS):
+    for exp, (runs, label) in enumerate(GROUPS):
         accs = []
         for subject in SUBJECTS:
-            train(subject, group, verbose=False)
-            acc = predict(subject, group, verbose=False)
+            try:
+                train(subject, runs, verbose=False)
+                acc = predict(subject, runs, verbose=False)
+            except Exception as e:
+                print(f"experiment {exp}: subject {subject:03d}: FAILED ({e!r})")
+                continue
             accs.append(acc)
-            print(f"experiment {exp}: subject {subject:03d}: accuracy = {acc:.4f}")
+            print(f"experiment {exp}: subject {subject:03d}: "
+                  f"accuracy = {acc:.4f}  ({label})")
 
-        group_means.append(float(np.mean(accs)))
+        group_means.append(float(np.mean(accs)) if accs else float("nan"))
 
-    print("\nMean accuracy of the six different experiments for all "
+    print(f"\nMean accuracy of the {len(GROUPS)} experiments over "
           f"{len(SUBJECTS)} subjects:")
-    for exp, m in enumerate(group_means):
-        print(f"experiment {exp}:      accuracy = {m:.4f}")
-    print(f"\nMean accuracy of {len(GROUPS)} experiments: {np.mean(group_means):.4f}")
+    for exp, (m, (_, label)) in enumerate(zip(group_means, GROUPS)):
+        print(f"experiment {exp}:      accuracy = {m:.4f}  ({label})")
+    print(f"\nMean accuracy of {len(GROUPS)} experiments: "
+          f"{np.mean(group_means):.4f}")
+
+    return group_means
