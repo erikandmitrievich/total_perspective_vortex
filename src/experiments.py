@@ -1,16 +1,11 @@
-CLASS_NAMES = {
-    3:  ("left fist", "right fist"), 4:  ("left fist", "right fist"),
-    5:  ("both fists", "both feet"), 6:  ("both fists", "both feet"),
-    7:  ("left fist", "right fist"), 8:  ("left fist", "right fist"),
-    9:  ("both fists", "both feet"), 10: ("both fists", "both feet"),
-    11: ("left fist", "right fist"), 12: ("left fist", "right fist"),
-    13: ("both fists", "both feet"), 14: ("both fists", "both feet"),
-}
+BASE_GROUPS = (([3, 7, 11],  "left fist vs right fist (executed)"),
+               ([4, 8, 12],  "left fist vs right fist (imagined)"),
+               ([5, 9, 13],  "both fists vs both feet (executed)"),
+               ([6, 10, 14], "both fists vs both feet (imagined)"))
 
-GROUPS = (([3, 7, 11],  "left fist vs right fist (executed)"),
-          ([4, 8, 12],  "left fist vs right fist (imagined)"),
-          ([5, 9, 13],  "both fists vs both feet (executed)"),
-          ([6, 10, 14], "both fists vs both feet (imagined)"))
+GROUPS = BASE_GROUPS + (
+    ([3, 4, 7, 8, 11, 12],  "left fist vs right fist (pooled)"),
+    ([5, 6, 9, 10, 13, 14], "both fists vs both feet (pooled)"))
 
 EXCLUDED = {88, 89, 92, 100}          # non-160 Hz / bad annotations
 
