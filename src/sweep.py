@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.experiments import GROUPS, SUBJECTS
+from src.experiments import EXPERIMENTS, SUBJECTS
 from src.predict import score_stream
 from src.train import fit_pipeline
 from src.data import load_dataset, DEFAULT
@@ -15,7 +15,7 @@ def evaluate(subject, runs, config=DEFAULT, **kw):
 def run_full_sweep():
     group_means = []
 
-    for exp, (runs, label) in enumerate(GROUPS):
+    for exp, (runs, label) in enumerate(EXPERIMENTS):
         accs = []
         for subject in SUBJECTS:
             try:
@@ -31,9 +31,9 @@ def run_full_sweep():
 
     print(f"\nMean accuracy of the six different experiments for "
           f"{len(SUBJECTS)} subjects:")
-    for exp, (m, (_, label)) in enumerate(zip(group_means, GROUPS)):
+    for exp, (m, (_, label)) in enumerate(zip(group_means, EXPERIMENTS)):
         print(f"experiment {exp}:      accuracy = {m:.4f}  ({label})")
-    print(f"\nMean accuracy of {len(GROUPS)} experiments: "
+    print(f"\nMean accuracy of {len(EXPERIMENTS)} experiments: "
           f"{np.mean(group_means):.4f}")
 
     return group_means
