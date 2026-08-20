@@ -1,0 +1,75 @@
+#+title: Data
+
+* Headers
+
+** dataclasses
+
+=dataclasses= imports a decorator that automatically generates boilerplate code for classes, primarily to store data.
+
+Without =from dataclasses import dataclass=:
+#+begin_src python
+class EEGSubject:
+    def __init__(self, subject_id, age, is_control_group):
+        self.subject_id = subject_id
+        self.age = age
+        self.is_control_group = is_control_group
+
+subject_1 = EEGSubject(id="Sub001", age=25, is_control_group=True)
+#+end_src
+
+With =from dataclasses import dataclass=:
+#+begin_src python
+from dataclasses import dataclass
+
+@dataclass
+class EEGSubject:
+    subject_id: str
+    age: int
+    is_control_group: bool
+
+subject_1 = EEGSubject(subject_id="Sub001", age=25, is_control_group=True)
+#+end_src
+
+** pathlib
+
+=pathlib= imports an object-oriented way to handle file paths. It is much more robust across different operating systems (Windows vs Mac/Linux) than the older os.path module.
+
+#+begin_src python
+from pathlib import Path
+
+data_folder = Path("my_project") / "datasets" / "eeg_files"
+file_path = data_folder / "recording_01.edf"
+
+print(file_path.name)     # Output: recording_01.edf
+print(file_path.suffix)   # Output: .edf
+print(file_path.exists()) # Output: True (if the file is actually on your hard drive)
+#+end_src
+
+** numpy
+
+Mainly a library for arrays.
+
+** numpy.typing
+
+Introduces types. Makes it possible to specify numpy array types.
+
+** mne
+
+Just imports a base library for MNE.
+
+** mne import Epochs, pick_types
+
+- =Epochs=: A class used to chop continuous EEG data into distinct, fixed-length time windows ("epochs") centered around specific events.
+
+- =pick_types=: A utility to filter channels. For example, a headset might record EEG, heart rate (ECG), and eye movement (EOG). In our case we need EEG only.
+
+** mne.datasets import eegbci
+
+Imports a specific dataset manager. It contains recordings of people performing and imagining different motor tasks.
+
+** mne.io import concatenate_raws, read_raw_edf
+
+- =read_raw_edf=: Function to read edf files (European Data Format).
+
+- =concatenate_raws=: A function to stitch multiple continuous data recordings together end-to-end.
+
