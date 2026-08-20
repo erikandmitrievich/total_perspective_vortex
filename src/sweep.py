@@ -1,8 +1,15 @@
 import numpy as np
 
 from src.experiments import GROUPS, SUBJECTS
-from src.predict import predict
-from src.train import train
+from src.predict import score_stream
+from src.train import fit_pipeline
+from src.data import load_dataset, DEFAULT
+
+
+def evaluate(subject, runs, config=DEFAULT, **kw):
+    X, y, _ = load_dataset(subject, runs, config)
+    clf, _, test_idx, scores = fit_pipeline(X, y, **kw)
+    return score_stream(clf, X, y, test_idx, verbose=False)
 
 
 def run_full_sweep():
@@ -12,8 +19,7 @@ def run_full_sweep():
         accs = []
         for subject in SUBJECTS:
             try:
-                train(subject, runs, verbose=False)
-                acc = predict(subject, runs, verbose=False)
+                acc = evaluate(subject, runs)
             except Exception as e:
                 print(f"experiment {exp}: subject {subject:03d}: FAILED ({e!r})")
                 continue

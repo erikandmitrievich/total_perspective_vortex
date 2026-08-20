@@ -2,6 +2,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+import numpy.typing as npt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import (StratifiedShuffleSplit, cross_val_score,
                                      train_test_split)
@@ -64,17 +65,35 @@ def make_pipeline(
     ])
 
 
+def fit_pipeline(
+        X: npt.NDArray[np.float64],
+        y: npt.NDArray[np.int_],
+        *,
+        n_components=4,
+        test_size: float = 0.2,
+        n_splits: int = 10,
+        seed: int = 42,
+) -> tuple[Pipeline, npt.NDArray[np.intp], npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+    idx = np.arange(len(y))
+    train_idx, test_idx = train_test_split(
+        idx, test_size=test_size, stratify=y, random_state=seed
+    )
+
+    clf = make_pipeline(n_components)
+    cv = StratifiedShuffleSplit(n_splits, test_size=test_size, random_state=seed)
+    scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=cv)
+    clf.fit(X[train_idx], y[train_idx])
+    return clf, train_idx, np.sort(test_idx), scores
+
+
 def train(
-    subject: int,
-    runs: list[int],
-    config: PreprocConfig = DEFAULT,
-    *,
-    test_size: float = 0.2,
-    n_splits: int = 10,
-    seed: int = 42,
-    verbose: bool = True,
+        subject: int,
+        runs: list[int],
+        config: PreprocConfig = DEFAULT,
+        verbose: bool = True,
+        **kw
 ) -> float:
-    """
+    """ TODO: rewrite
     Fit and persist a model for one subject/run set.
 
     Holds out a stratified test partition, cross-validates the whole
@@ -111,17 +130,7 @@ def train(
     overwriting any existing file.
     """
     X, y, _ = load_dataset(subject, runs, config)
-
-    idx = np.arange(len(y))
-    train_idx, test_idx = train_test_split(
-        idx, test_size=test_size, stratify=y, random_state=seed
-    )
-
-    clf = make_pipeline()
-
-    cv = StratifiedShuffleSplit(n_splits, test_size=test_size, random_state=seed)
-    scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=cv)
-    clf.fit(X[train_idx], y[train_idx])
+    clf, train_idx, test_idx, scores = fit_pipeline(X, y, **kw)
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -141,4 +150,5 @@ def train(
     if verbose:
         print(np.array2string(scores, precision=4, floatmode="fixed"))
         print(f"cross_val_score: {scores.mean():.4f}")
+
     return float(scores.mean())
