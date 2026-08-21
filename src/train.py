@@ -11,7 +11,18 @@ from sklearn.pipeline import Pipeline
 
 from src.csp import MyCSP
 from src.data import DEFAULT, PreprocConfig, load_dataset
+from dataclasses import dataclass
 
+
+@dataclass(frozen=True)
+class FitConfig:
+    n_components: int = 4
+    test_size:    float = 0.2
+    n_splits:     int = 10
+    seed:         int = 42
+
+
+FIT_DEFAULT = FitConfig()
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
@@ -68,19 +79,17 @@ def make_pipeline(
 def fit_pipeline(
         X: npt.NDArray[np.float64],
         y: npt.NDArray[np.int_],
-        *,
-        n_components=4,
-        test_size: float = 0.2,
-        n_splits: int = 10,
-        seed: int = 42,
+        fit: FitConfig = FIT_DEFAULT
 ) -> tuple[Pipeline, npt.NDArray[np.intp], npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+    """TODO: write docstring
+    """
     idx = np.arange(len(y))
     train_idx, test_idx = train_test_split(
-        idx, test_size=test_size, stratify=y, random_state=seed
+        idx, test_size=fit.test_size, stratify=y, random_state=fit.seed
     )
 
-    clf = make_pipeline(n_components)
-    cv = StratifiedShuffleSplit(n_splits, test_size=test_size, random_state=seed)
+    clf = make_pipeline(fit.n_components)
+    cv = StratifiedShuffleSplit(fit.n_splits, test_size=fit.test_size, random_state=fit.seed)
     scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=cv)
     clf.fit(X[train_idx], y[train_idx])
     return clf, train_idx, np.sort(test_idx), scores
@@ -90,8 +99,8 @@ def train(
         subject: int,
         runs: list[int],
         config: PreprocConfig = DEFAULT,
-        verbose: bool = True,
-        **kw
+        fit: FitConfig = FIT_DEFAULT,
+        verbose: bool = True
 ) -> float:
     """ TODO: rewrite
     Fit and persist a model for one subject/run set.
@@ -109,12 +118,6 @@ def train(
         Runs sharing one T1/T2 semantics, as returned by ``runs_for``.
     config : PreprocConfig
         Preprocessing parameters; persisted so ``predict`` can reproduce them.
-    test_size : float, default=0.2
-        Fraction held out, and the validation fraction of each CV split.
-    n_splits : int, default=10
-        Number of ``StratifiedShuffleSplit`` resamples.
-    seed : int, default=42
-        Seeds both the holdout split and the CV, making the run reproducible.
     verbose : bool, default=True
         Print the per-fold scores and their mean in the subject's format.
 
@@ -124,13 +127,13 @@ def train(
         Mean cross-validation accuracy on the training partition. Not a
         generalisation estimate — that is ``predict``'s job.
 
-    Side Effects
+    Side
     ------------
     Creates ``MODELS_DIR`` and writes ``model_path(subject, runs)``,
     overwriting any existing file.
     """
     X, y, _ = load_dataset(subject, runs, config)
-    clf, train_idx, test_idx, scores = fit_pipeline(X, y, **kw)
+    clf, train_idx, test_idx, scores = fit_pipeline(X, y, fit)
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -2,13 +2,19 @@ import numpy as np
 
 from src.experiments import EXPERIMENTS, SUBJECTS
 from src.predict import score_stream
-from src.train import fit_pipeline
-from src.data import load_dataset, DEFAULT
+from src.train import fit_pipeline, FitConfig, FIT_DEFAULT
+from src.data import load_dataset, PreprocConfig, DEFAULT
 
 
-def evaluate(subject, runs, config=DEFAULT, **kw):
+def evaluate(
+        subject: int,
+        runs: list[int],
+        config: PreprocConfig = DEFAULT,
+        fit: FitConfig = FIT_DEFAULT,
+) -> float:
+    """TODO: write docsting"""
     X, y, _ = load_dataset(subject, runs, config)
-    clf, _, test_idx, scores = fit_pipeline(X, y, **kw)
+    clf, _, test_idx, scores = fit_pipeline(X, y, fit)
     return score_stream(clf, X, y, test_idx, verbose=False)
 
 
