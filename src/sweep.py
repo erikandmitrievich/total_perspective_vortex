@@ -41,7 +41,7 @@ def evaluate(
     return score_stream(clf, X, y, test_idx, verbose=False)
 
 
-def run_full_sweep():
+def run_full_sweep() -> list[float]:
     """
     Score every subject on every experiment and report the group means.
 

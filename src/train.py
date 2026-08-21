@@ -102,7 +102,8 @@ def fit_pipeline(
         X: npt.NDArray[np.float64],
         y: npt.NDArray[np.int_],
         fit: FitConfig = FIT_DEFAULT
-) -> tuple[Pipeline, npt.NDArray[np.intp], npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+) -> tuple[Pipeline, npt.NDArray[np.intp],
+           npt.NDArray[np.intp], npt.NDArray[np.float64]]:
     """
     Cross-validate and fit the pipeline on a stratified training partition.
 

@@ -2,12 +2,21 @@ import time
 
 import joblib
 import numpy as np
+import numpy.typing as npt
 
 from src.data import load_dataset
 from src.train import model_path
+from sklearn.pipeline import Pipeline
 
 
-def score_stream(clf, X, y, test_idx, *, verbose=True):
+def score_stream(
+        clf: Pipeline,
+        X: npt.NDArray[np.float64],
+        y: npt.NDArray[np.int_],
+        test_idx: npt.NDArray[np.intp],
+        *,
+        verbose=True
+) -> float:
     """
     Replay held-out epochs one at a time and score the predictions.
 

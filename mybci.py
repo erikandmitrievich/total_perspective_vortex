@@ -11,7 +11,9 @@ import mne
 mne.set_log_level("ERROR")
 
 
-def parse_args(argv=None) -> argparse.Namespace:
+def parse_args(
+        argv=None
+) -> argparse.Namespace:
     """
     Parse and validate the command-line interface.
 
@@ -54,7 +56,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     return args
 
 
-def main(argv=None):
+def main(
+        argv=None
+):
     """
     Entry point: dispatch to sweep, training or prediction.
 
