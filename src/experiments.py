@@ -23,17 +23,7 @@ experiments exist in this namespace only — they are not reachable from the
 CLI, see ``runs_for``.
 """
 
-EXCLUDED = {88, 89, 92, 100}
-"""
-Subjects omitted from the sweep.
-
-Excluded for recordings that do not match the 160 Hz / annotation format
-the loader assumes. Not re-derived at import time: the set is a hard-coded
-claim about the dataset, and removing a subject from it is the way to test
-that claim.
-"""
-
-SUBJECTS = [s for s in range(1, 110) if s not in EXCLUDED]
+SUBJECTS = range(1, 110)
 """Subject numbers the sweep iterates, in ascending order."""
 
 

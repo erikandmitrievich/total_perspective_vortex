@@ -14,7 +14,9 @@
 
 * Evaluation risk
 
-- [ ] Justify exclusion or include the EXCLUDED subjects.
+- [X] Justify exclusion or include the EXCLUDED subjects.
+
+  I would comply with the instructions and inlcude previosuly excluded subejcts.
 
 - [ ] Research "streaming latency requirement".
 
