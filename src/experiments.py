@@ -2,22 +2,65 @@ BASE_GROUPS = (([3, 7, 11],  "left fist vs right fist (executed)"),
                ([4, 8, 12],  "left fist vs right fist (imagined)"),
                ([5, 9, 13],  "both fists vs both feet (executed)"),
                ([6, 10, 14], "both fists vs both feet (imagined)"))
+"""
+The four task groups, as ``(runs, label)`` pairs.
+
+Each group is three repetitions of one task. Within a group T1 and T2 have
+one meaning throughout, which is what makes concatenation across the three
+runs legitimate.
+"""
 
 EXPERIMENTS = BASE_GROUPS + (
     ([3, 4, 7, 8, 11, 12],  "left fist vs right fist (pooled)"),
     ([5, 6, 9, 10, 13, 14], "both fists vs both feet (pooled)"))
+"""
+The six experiments scored by the sweep.
 
-EXCLUDED = {88, 89, 92, 100}  # non-160 Hz / bad annotations
+The last two pool an executed group with its imagined counterpart: the
+movements behind T1/T2 are identical, only the execution modality differs,
+so the labels remain consistent and the epoch count doubles. Pooled
+experiments exist in this namespace only — they are not reachable from the
+CLI, see ``runs_for``.
+"""
+
+EXCLUDED = {88, 89, 92, 100}
+"""
+Subjects omitted from the sweep.
+
+Excluded for recordings that do not match the 160 Hz / annotation format
+the loader assumes. Not re-derived at import time: the set is a hard-coded
+claim about the dataset, and removing a subject from it is the way to test
+that claim.
+"""
 
 SUBJECTS = [s for s in range(1, 110) if s not in EXCLUDED]
+"""Subject numbers the sweep iterates, in ascending order."""
 
 
 def runs_for(run: int) -> list[int]:
-    """ TODO: rewrite
-    Expand a run number to the full group sharing its T1/T2 semantics.
+    """
+    Expand a run number to its base group.
 
-    T1/T2 mean different movements per group, so a group is the largest
-    set that can be pooled into one binary problem.
+    A single run is not a self-contained binary problem: the three runs of
+    a group are repetitions of one task and are the unit that gets trained
+    on. Only ``BASE_GROUPS`` is searched — a run number cannot disambiguate
+    between its base group and the pooled experiment containing it, so the
+    pooled experiments are deliberately unreachable from here.
+
+    Parameters
+    ----------
+    run : int
+        Motor-imagery run number: 3-14, excluding the baselines 1-2.
+
+    Returns
+    -------
+    runs : list of int
+        The three runs of the group containing ``run``.
+
+    Raises
+    ------
+    ValueError
+        If ``run`` is not one of the twelve motor-imagery runs.
     """
     for runs, _ in BASE_GROUPS:
         if run in runs:

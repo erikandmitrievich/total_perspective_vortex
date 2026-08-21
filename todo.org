@@ -1,0 +1,27 @@
+#+title: Todo
+
+* Documentation
+
+- [ ] [[file:docs/csp.org][csp.org]] derives Rank Restriction which was not applied to the code, as CAR was not used. Remove it from the documentation.
+
+- [X] =make_epochs= docstring declares RuntimeError, which it not raises.
+
+- [X] =train=, =runs_for=, =score_stream=, =predict= fix/write the docstring.
+
+* Requirements
+
+- [ ] PSD visualization.
+
+* Evaluation risk
+
+- [ ] Justify exclusion or include the EXCLUDED subjects.
+
+- [ ] Research "streaming latency requirement".
+
+- [X] Seed check, test other seeds.
+
+  Tried other (21, 52, and few other), =seed = 42= showed the highest number (2nd decimal place difference).
+
+* Other
+
+- Remove [[file:src/csp_test.py][csp_test.py]].

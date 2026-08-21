@@ -12,13 +12,48 @@ def evaluate(
         config: PreprocConfig = DEFAULT,
         fit: FitConfig = FIT_DEFAULT,
 ) -> float:
-    """TODO: write docsting"""
+    """
+    Train and score one subject/experiment cell of the sweep.
+
+    Mirrors ``train`` + ``predict`` without touching the disk: the fitted
+    estimator and the split stay in memory and are discarded after
+    scoring. The CV scores from ``fit_pipeline`` are dropped — the sweep
+    reports held-out accuracy only.
+
+    Parameters
+    ----------
+    subject : int
+        Subject number, 1-109.
+    runs : list of int
+        One entry of ``EXPERIMENTS``.
+    config : PreprocConfig
+        Preprocessing parameters.
+    fit : FitConfig
+        Split and estimator parameters.
+
+    Returns
+    -------
+    acc : float
+        Held-out accuracy for this cell.
+    """
     X, y, _ = load_dataset(subject, runs, config)
     clf, _, test_idx, scores = fit_pipeline(X, y, fit)
     return score_stream(clf, X, y, test_idx, verbose=False)
 
 
 def run_full_sweep():
+    """
+    Score every subject on every experiment and report the group means.
+
+    Prints one line per cell as it goes, then the six experiment means and
+    their mean, in the format the subject specifies.
+
+    Returns
+    -------
+    group_means : list of float
+        One mean per entry of ``EXPERIMENTS``, in order. ``nan`` for an
+        experiment where every subject failed.
+    """
     group_means = []
 
     for exp, (runs, label) in enumerate(EXPERIMENTS):

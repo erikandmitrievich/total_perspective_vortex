@@ -5,7 +5,6 @@ import numpy as np
 import numpy.typing as npt
 import mne
 
-
 from mne import Epochs, pick_types
 from mne.datasets import eegbci
 from mne.io import concatenate_raws, read_raw_edf
@@ -27,7 +26,10 @@ class PreprocConfig:
         Band-pass edges in Hz. Defaults cover mu and beta (7-30 Hz), the
         bands carrying motor-imagery power modulation.
     tmin, tmax : float
-        Epoch bounds in seconds relative to event onset.
+        Epoch bounds in seconds relative to event onset. ``tmax=2.0``
+        keeps the window short enough to fit inside every trial; a longer
+        window makes epochs adjacent to a run boundary overrun it, and MNE
+        drops them without raising.
     crop_tmin, crop_tmax : float or None
         Feature window inside the epoch. ``crop_tmin=None`` disables cropping.
     montage : str
@@ -46,7 +48,22 @@ class PreprocConfig:
 
 
 DEFAULT = PreprocConfig()
+"""
+Module-level default configuration.
+
+Every loader takes ``config=DEFAULT``, so an unqualified call and an
+explicitly configured call cannot diverge on anything but what the caller
+passed.
+"""
+
 EVENT_ID = {"T1": 1, "T2": 2}
+"""
+Annotation description to event code, pinned.
+
+T0 (rest) is deliberately absent: only the two task classes are epoched.
+These codes are what ``_labels_from_events`` shifts to {0, 1}, so the
+mapping and the label convention are one decision, not two.
+"""
 
 
 def load_raw(
@@ -136,13 +153,6 @@ def make_epochs(
     -------
     epochs : mne.Epochs
         Preloaded epochs over EEG channels only, no baseline correction.
-
-    Raises
-    ------
-    RuntimeError
-        If any epoch was dropped for a reason other than ``IGNORED``.
-        Dropped epochs would desynchronise ``X`` from any externally held
-        index arrays, so this fails loudly rather than shrinking the set.
     """
     picks = pick_types(filtered.info, meg=False, eeg=True,
                        stim=False, eog=False, exclude="bads")
