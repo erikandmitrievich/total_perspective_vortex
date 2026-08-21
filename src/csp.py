@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.typing as npt
 from scipy.linalg import eigh
-
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 

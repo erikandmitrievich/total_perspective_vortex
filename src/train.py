@@ -1,17 +1,19 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import joblib
 import numpy as np
 import numpy.typing as npt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.model_selection import (StratifiedShuffleSplit, cross_val_score,
-                                     train_test_split)
-
+from sklearn.model_selection import (
+    StratifiedShuffleSplit,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.pipeline import Pipeline
 
 from src.csp import MyCSP
 from src.data import DEFAULT, PreprocConfig, load_dataset
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)

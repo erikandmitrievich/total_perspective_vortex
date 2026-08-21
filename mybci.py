@@ -1,14 +1,12 @@
-import sys
 import argparse
-
-from src.train import train
-from src.predict import predict
-from src.sweep import run_full_sweep
-from src.experiments import runs_for
+import sys
 
 import mne
 
-mne.set_log_level("ERROR")
+from src.experiments import runs_for
+from src.predict import predict
+from src.sweep import run_full_sweep
+from src.train import train
 
 
 def parse_args(
@@ -70,6 +68,8 @@ def main(
     argv : list of str or None, default=None
         Argument list forwarded to ``parse_args``.
     """
+    mne.set_log_level("ERROR")
+
     args = parse_args(argv)
     if args.subject is None:
         run_full_sweep()

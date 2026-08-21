@@ -1,9 +1,9 @@
 import numpy as np
 
+from src.data import DEFAULT, PreprocConfig, load_dataset
 from src.experiments import EXPERIMENTS, SUBJECTS
 from src.predict import score_stream
-from src.train import fit_pipeline, FitConfig, FIT_DEFAULT
-from src.data import load_dataset, PreprocConfig, DEFAULT
+from src.train import FIT_DEFAULT, FitConfig, fit_pipeline
 
 
 def evaluate(

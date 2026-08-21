@@ -3,10 +3,10 @@ import time
 import joblib
 import numpy as np
 import numpy.typing as npt
+from sklearn.pipeline import Pipeline
 
 from src.data import load_dataset
 from src.train import model_path
-from sklearn.pipeline import Pipeline
 
 
 def score_stream(

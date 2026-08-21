@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+import mne
 import numpy as np
 import numpy.typing as npt
-import mne
-
 from mne import Epochs, pick_types
+from mne.channels import make_standard_montage
 from mne.datasets import eegbci
 from mne.io import concatenate_raws, read_raw_edf
-from mne.channels import make_standard_montage
 
 
 @dataclass(frozen=True)
