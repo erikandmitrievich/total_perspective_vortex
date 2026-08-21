@@ -2,7 +2,7 @@
 
 * Documentation
 
-- [ ] [[file:docs/csp.org][csp.org]] derives Rank Restriction which was not applied to the code, as CAR was not used. Remove it from the documentation.
+- [ ] [[file:csp.org][csp.org]] derives Rank Restriction which was not applied to the code, as CAR was not used. Remove it from the documentation.
 
 - [X] =make_epochs= docstring declares RuntimeError, which it not raises.
 
@@ -10,7 +10,7 @@
 
 * Requirements
 
-- [ ] PSD visualization.
+- [X] PSD visualization.
 
 * Evaluation risk
 
@@ -26,4 +26,10 @@
 
 * Other
 
-- Remove [[file:src/csp_test.py][csp_test.py]].
+- [X] Clean headers.
+
+- [X] Remove [[file:src/csp_test.py][csp_test.py]].
+
+- [ ] Add requirements.txt.
+
+- [ ] Add module docstrings.

@@ -1,9 +1,6 @@
 # system files
 .DS_Store
 
-# IDE junk
-.vscode/
-
 # latex
 *.aux
 *.log
@@ -15,12 +12,8 @@
 __pycache__
 .pytest_cache/
 
-# personal
-_archive/
-
 # data & models
 models/
 
 # temporarily
 optimizing_spatial_filters_eeg.pdf
-Makefile
