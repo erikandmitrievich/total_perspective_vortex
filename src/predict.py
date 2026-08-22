@@ -58,7 +58,6 @@ def score_stream(
         print("epoch nb: [prediction] [truth] equal?")
         for k, (p, t) in enumerate(zip(preds, truth)):
             print(f"epoch {k:02d}:     [{p+1}]       [{t+1}]    {p == t}")
-            # print(f"epoch {k:02d}:     [{p}]       [{t}]    {p == t}")
         print(f"Accuracy: {acc:.4f}")
         print(f"max chunk latency: {max(latencies) * 1e3:.2f} ms")
 

@@ -24,12 +24,14 @@
 
   Tried other (21, 52, and few other), =seed = 42= showed the highest number (2nd decimal place difference).
 
+- [X] Fix the "Mean accuracy" print to subject's.
+
 * Other
 
 - [X] Clean headers.
 
 - [X] Remove [[file:src/csp_test.py][csp_test.py]].
 
-- [ ] Add requirements.txt.
+- [X] Add requirements.txt.
 
 - [ ] Add module docstrings.
