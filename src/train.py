@@ -1,3 +1,10 @@
+"""
+Pipeline construction, cross-validation, fitting and persistence.
+
+``fit_pipeline`` is the pure core — arrays in, fitted estimator and split
+out; ``train`` is the shell that gives it a subject, a run group and a file.
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 

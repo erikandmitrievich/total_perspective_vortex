@@ -1,3 +1,11 @@
+"""
+The 109-subject, six-experiment sweep.
+
+Routes through ``fit_pipeline`` and ``score_stream`` rather than ``train``
+and ``predict``: a sweep cell is then the same number as a CLI run, minus
+the disk round trip.
+"""
+
 import numpy as np
 
 from src.data import DEFAULT, PreprocConfig, load_dataset

@@ -1,3 +1,10 @@
+"""
+Before/after PSD figure for the preprocessing step.
+
+Kept out of ``mybci.py``: the plot is a deliverable in its own right and
+pulls in matplotlib, which the classification path never needs.
+"""
+
 import argparse
 from pathlib import Path
 

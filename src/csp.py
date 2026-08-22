@@ -1,3 +1,10 @@
+"""
+Common Spatial Patterns as an sklearn transformer.
+
+The one algorithm implemented from scratch. Derivation, estimator choice
+and the identifiability caveats are in ``docs/csp.org``.
+"""
+
 import numpy as np
 import numpy.typing as npt
 from scipy.linalg import eigh

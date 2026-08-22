@@ -1,3 +1,11 @@
+"""
+Loading, preprocessing, epoching — everything upstream of the pipeline.
+
+``load_dataset`` is the single path from subject/runs to arrays; the stages
+it composes are exported only because visualisation needs the intermediate
+``raw`` and ``filtered`` objects.
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 

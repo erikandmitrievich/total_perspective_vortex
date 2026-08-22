@@ -1,3 +1,10 @@
+"""
+Run groups and the six scored experiments.
+
+Which runs share one T1/T2 semantics is a property of the dataset, not of
+any caller, so the mapping is pinned here and nowhere else.
+"""
+
 BASE_GROUPS = (([3, 7, 11],  "left fist vs right fist (executed)"),
                ([4, 8, 12],  "left fist vs right fist (imagined)"),
                ([5, 9, 13],  "both fists vs both feet (executed)"),

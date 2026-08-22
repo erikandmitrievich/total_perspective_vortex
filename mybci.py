@@ -1,3 +1,10 @@
+"""
+Command-line entry point.
+
+Validates arguments and dispatches to the sweep, ``train`` or ``predict``.
+Holds no processing logic of its own.
+"""
+
 import argparse
 import sys
 

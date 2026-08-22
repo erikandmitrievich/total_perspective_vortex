@@ -1,3 +1,11 @@
+"""
+Stream replay of held-out epochs against a persisted model.
+
+Epochs are classified one at a time rather than as a batch, which is what
+makes the subject's 2 s per-chunk bound a quantity the code measures rather
+than assumes.
+"""
+
 import time
 
 import joblib
