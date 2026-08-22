@@ -8,7 +8,7 @@ from src.data import DEFAULT, PreprocConfig, load_raw, preprocess
 from src.experiments import runs_for
 
 ROOT = Path(__file__).resolve().parent
-FIG_DIR = ROOT / "figures"
+FIG_DIR = ROOT / "figs"
 
 
 def parse_args(
