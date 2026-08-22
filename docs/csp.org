@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-07-16>
-#+lastmod: <2026-07-19>
+#+lastmod: <2026-08-22>
 #+latex: \newpage
 #+latex_header: \setlength{\parindent}{0pt}
 #+latex_header: \setlength{\parskip}{1em}
@@ -89,49 +89,31 @@ If the covariance matrix takes the form of:
 
   The positive covariance ($1.5$) tilts the ellipse from bottom-left to top-right: as $x$ increases, $y$ tends to increase.
 
-** Common Average Reference
-
-Common Average Reference (CAR) is a spatial filter used in EEG recordings.
-
-$$V_{\mathrm{CAR}, i} = V_i - \dfrac{1}{N} \sum_{j=1}^{N} V_j$$
-
-where:
-
-- $V_{\mathrm{CAR}}$ :: is the new re-referenced voltage of electrode
-
-- $V_i$ :: is the original electrode redording
-
-- $N$ :: is the total number of electrodes
-
-- $\sum_{j=1}^{N} V_j$ :: is the sum of voltage across all electrodes
-
-** Singular matrix
-
-Let $A$ be an $n \times n$ matrix over field $F$.
-
-The matrix $A$ is called *singular* if it has not invertable. Such that,
-
-$$\neg \exists B \in F^{n \times n} : AB = BA = I$$
-
-Key concepts:
-
-- *Determinant*: $\mathrm{det}(A) = 0$
-
-- *Kernel*: $Ax = 0$ has non-trivial solution
-
-- *Deficient rank*: $\mathrm{rank}(A) < n$
-
-- *Zero eigenvalue*: The scalar $0$ is an eigenvalue of $A$
-
 ** Properties used later
 
 For any $\Sigma^{(c)}$ built as $ZZ^{\top}$ (up to a positive scalar):
 
 1. *Symmetry.* $(ZZ^{\top})^{\top} = ZZ^{\top}$.
 2. *Positive semi-definiteness.* $v^{\top}ZZ^{\top}v = \lVert Z^{\top}v \rVert_2^2 \ge 0$ for all $v$.
-3. *Definiteness.* $\Sigma^{(c)} \succ 0$ (strictly) iff $Z$ has full row rank $C$. If the data carries an average-reference constraint $\sum_{\text{channels}} = 0$, then $\mathbf{1}^{\top}Z = 0$, so $\operatorname{rank} Z \le C-1$ and $\Sigma^{(c)}$ is *singular*.
+3. *Definiteness.* $\Sigma^{(c)} \succ 0$ (strictly) iff $Z$ has full row rank $C$. Any linear
+   constraint on the channel axis, $a^{\top}Z = 0$, drops the rank to $\le C-1$ and makes
+   $\Sigma^{(c)}$ *singular*.
 
-Property 3 is the whole reason for section [[*Rank restriction][Rank restriction]].
+No such constraint is imposed here: =preprocess= applies no re-referencing (see [[*Why no re-referencing][Why no re-referencing]]), so $\Sigma \succ 0$ and property 3 is what licenses the Cholesky factorisation in [[*Why =eigh= is the right solver (whiten-then-diagonalise)][Why =eigh= is the right solver]].
+
+** Why no re-referencing
+
+CSP is invariant under any *invertible* linear map of the channel axis. Replacing $X_i \mapsto AX_i$ with $A \in GL(C)$ sends $\Sigma^{(c)} \mapsto A\Sigma^{(c)}A^{\top}$ and $w \mapsto A^{-\top}w$, leaving eq. [[eq:objective]], the spectrum $\{\mu_k\}$ and the features eq. [[eq:feature]] unchanged. A re-reference is therefore either a no-op for CSP or a loss of a dimension — never a gain.
+
+The common average reference
+
+$$V_{\mathrm{CAR},i} = V_i - \frac{1}{C}\sum_{j=1}^{C}V_j$$
+
+is the map $A = I - \tfrac1C\mathbf{1}\mathbf{1}^{\top}$: a projector of rank $C-1$, not invertible. It imposes $\mathbf{1}^{\top}Z = 0$, hence $\operatorname{rank}\Sigma \le C-1$ and $\Sigma \not\succ 0$, and the whitening step of the eigensolver ceases to exist. Empirically the naive route then returns eigenvalues outside $[0,1]$ (observed range $[-0.309,\,1.522]$) and a =complex128= filter matrix — a silent failure, not an exception.
+
+So CAR costs a dimension and buys nothing CSP can use. It is not applied.
+
+*Caveat.* The invariance argument holds for the unregularised estimator. Shrinkage towards $I$ is basis-dependent — $A(\,(1-\rho)\Sigma + \rho\tau I\,)A^{\top} \neq (1-\rho)A\Sigma A^{\top} + \rho\tau' I$ in general — so with =reg= set, the choice of reference stops being neutral.
 
 ** Definitions
 
@@ -301,7 +283,7 @@ The textbook next step,
 
 is *correct but unusable*, for three reasons:
 
-1. It requires $\Sigma^{(-)} \succ 0$. Under an average reference this fails (Supplementary, property 3).
+1. It requires forming $(\Sigma^{(-)})^{-1}$ explicitly. $\Sigma^{(-)}$ is estimated from one class only and is the worse-conditioned of the two available denominators; $\Sigma$ is singular only where *both* classes are silent (next section, point 2).
 2. $M$ is a product of two symmetric matrices and is *not itself symmetric*, so the spectrum is not guaranteed real and the eigenvectors are not guaranteed orthogonal in any inner product. Numerically this forces a general (non-symmetric) solver, i.e. =numpy.linalg.eig=, whose return dtype is =complex128= as soon as any imaginary part is non-zero.
 3. $\det(M - \lambda I) = 0$ is a characteristic-polynomial statement. It defines the eigenvalues but is never how they are computed for $C = 64$.
 
@@ -332,7 +314,7 @@ Add $\lambda \Sigma^{(+)}w$ to both sides of eq. [[eq:pencil-raw]]:
 
 2. *Conditioning.* $\Sigma = \Sigma^{(+)} + \Sigma^{(-)}$ is singular only in directions where *both* classes are silent, a strictly weaker condition than $\Sigma^{(-)}$ being singular.
 
-3. *Symmetry.* $\Sigma$ is symmetric PSD, so if it is also definite the pencil $(\Sigma^{(+)}, \Sigma)$ is a *symmetric-definite* pencil and the machinery of the next section applies.
+3. *Symmetry.* $\Sigma$ is symmetric PSD, and definite by Supplementary property 3, so $(\Sigma^{(+)}, \Sigma)$ is a *symmetric-definite* pencil and the machinery of the next section applies.
 
 ** Complementarity
 
@@ -369,7 +351,7 @@ Eq. [[eq:diag]] is the actual content of "CSP": a single change of basis that di
 
 ** Why =eigh= is the right solver (whiten-then-diagonalise)
 
-Let $\Sigma \succ 0$ and take its Cholesky factorisation $\Sigma = LL^{\top}$. Substituting $v = L^{\top}w$ into eq. [[eq:pencil-norm]]:
+Let $\Sigma \succ 0$ (Supplementary, property 3) and take its Cholesky factorisation $\Sigma = LL^{\top}$. Substituting $v = L^{\top}w$ into eq. [[eq:pencil-norm]]:
 
 \begin{align*}
 \Sigma^{(+)} w &= \mu \, \Sigma w \\
@@ -399,42 +381,7 @@ $L^{-1}$ is a whitening transform for $\Sigma$; the ordinary symmetric eigenprob
 
 The ascending order is a silent trap: reversing the spectrum yields $\mu \mapsto 1-\mu$, which still looks like a valid CSP spectrum.
 
-* Rank restriction
-
-** The problem
-
-An average reference imposes $\mathbf{1}^{\top}Z_c = 0$, hence $\operatorname{rank}\Sigma \le C - 1$ and $\Sigma \not\succ 0$: the Cholesky step above does not exist. Empirically, with $C = 64$ and the reference applied, the naive route returns eigenvalues outside $[0,1]$ (observed range $[-0.309,\, 1.522]$) and a =complex128= filter matrix — a silent failure, not an exception.
-
-** The fix
-
-Let $\Sigma_{\text{ref}} = \tfrac12\Sigma$ with eigendecomposition
-
-$\Sigma_{\text{ref}} = UDU^{\top}$, $D = \operatorname{diag}(d_1 \ge \cdots \ge d_C)$,
-
-and let $r = \operatorname{rank}\Sigma_{\text{ref}}$. Define the *restricting matrix*
-
-#+NAME: eq:restrict
-\begin{equation}
-P = \big[\,u_1 \; \cdots \; u_r\,\big]^{\top} \in \mathbb{R}^{r \times C}
-\end{equation}
-
-whose rows span the principal (non-null) subspace. Solve the *restricted* pencil
-
-#+NAME: eq:restricted-pencil
-\begin{equation}
-\big(P\Sigma^{(+)}P^{\top}\big)\,\tilde{w} = \mu \,\big(P\Sigma P^{\top}\big)\,\tilde{w}
-\end{equation}
-
-in which $P\Sigma P^{\top} \succ 0$ by construction, then lift back:
-
-#+NAME: eq:lift
-\begin{equation}
-w = P^{\top}\tilde{w}, \qquad W = P^{\top}\tilde{W} \in \mathbb{R}^{C \times r}
-\end{equation}
-
-so =filters_= $= W^{\top} \in \mathbb{R}^{r \times C}$. This is what MNE does by default (=restr_type="restricting"=), which is why its =filters_= is $(63, 64)$ and not $(64, 64)$ on average-referenced data.
-
-*Verification target:* eq. [[eq:restricted-pencil]] reproduces MNE's spectrum to $\sim 10^{-13}$.
+*Verification target:* solved this way, eq. [[eq:pencil-norm]] reproduces MNE's spectrum to $\sim 10^{-13}$.
 
 * Component selection and ordering
 
