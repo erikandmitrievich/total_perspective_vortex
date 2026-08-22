@@ -54,7 +54,7 @@ def run_full_sweep() -> list[float]:
         One mean per entry of ``EXPERIMENTS``, in order. ``nan`` for an
         experiment where every subject failed.
     """
-    group_means = []
+    group_means, group_counts, failures = [], [], []
 
     for exp, (runs, label) in enumerate(EXPERIMENTS):
         accs = []
@@ -62,6 +62,7 @@ def run_full_sweep() -> list[float]:
             try:
                 acc = evaluate(subject, runs)
             except Exception as e:
+                failures.append((exp, subject, repr(e)))
                 print(f"experiment {exp}: subject {subject:03d}: FAILED ({e!r})")
                 continue
             accs.append(acc)
@@ -69,12 +70,18 @@ def run_full_sweep() -> list[float]:
                   f"accuracy = {acc:.4f}  ({label})")
 
         group_means.append(float(np.mean(accs)) if accs else float("nan"))
+        group_counts.append(len(accs))
 
-    print(f"\nMean accuracy of the six different experiments for "
-          f"all {len(SUBJECTS)} subjects:")
-    for exp, (m, (_, label)) in enumerate(zip(group_means, EXPERIMENTS)):
-        print(f"experiment {exp}:      accuracy = {m:.4f}  ({label})")
+    print("\nMean accuracy of the six different experiments:")
+    for exp, (m, n, (_, label)) in enumerate(
+            zip(group_means, group_counts, EXPERIMENTS)):
+        print(f"experiment {exp}:      accuracy = {m:.4f}  (n={n}, {label})")
     print(f"\nMean accuracy of {len(EXPERIMENTS)} experiments: "
           f"{np.mean(group_means):.4f}")
+
+    if failures:
+        print(f"\n{len(failures)} cells failed:")
+        for exp, subject, err in failures:
+            print(f"  experiment {exp}, subject {subject:03d}: {err}")
 
     return group_means

@@ -21,19 +21,17 @@ class FitConfig:
     """
     Split and estimator parameters shared by training and the sweep.
 
-    Frozen for the same reason as ``PreprocConfig``: the split is part of
-    the experiment, so it travels as one value rather than as loose keyword
-    arguments that a caller can partially override. Unlike ``PreprocConfig``
-    it is not currently written to the model file — ``predict`` needs only
-    the persisted ``test_idx``, so the split is reproducible in effect but
-    not recorded.
+    Persisted alongside the fitted model, but never read back:
+    ``predict`` restores the pipeline and the stored ``test_idx``
+    directly, so no field here is reconstructed at scoring time.
 
     Attributes
     ----------
     n_components : int
         Spatial filters kept by ``MyCSP``. Must be even.
     test_size : float
-        Fraction held out, and the validation fraction inside each CV split.
+        Fraction held out, and the validation fraction inside each CV
+        split. Deliberately one field, so the two are comparable.
     n_splits : int
         Number of ``StratifiedShuffleSplit`` resamples.
     seed : int
