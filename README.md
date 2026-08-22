@@ -9,7 +9,7 @@ Given a subject's 64-channel recording, decide which of two movements they perfo
 1. **Load** — concatenate the runs of one task group (`mne.datasets.eegbci`).
 2. **Preprocess** — 7–30 Hz band-pass, `standard_1005` montage.
 3. **Epoch** — `T1`/`T2` from annotations, cropped to 1–2 s after onset.
-4. **Reduce** — `MyCSP`: solves `S₀w = μ(S₀ + S₁)w`, keeps the extreme filters, returns log band power.
+4. **Reduce** — `MyCSP`: solves $S_0 w = \mu (S_0 + S_1) w$, keeps the extreme filters, returns log band power.
 5. **Classify** — linear discriminant analysis.
 6. **Replay** — held-out epochs predicted one at a time, measuring per-chunk latency against the 2 s bound.
 
