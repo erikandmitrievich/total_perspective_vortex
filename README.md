@@ -19,7 +19,7 @@ CSP is implemented from scratch in `src/csp.py`; its derivation is in [`docs/csp
 
 ```sh
 python -m venv .venv && source .venv/bin/activate
-pip install mne scikit-learn numpy scipy joblib matplotlib
+pip install -r requirements.txt
 ```
 
 The dataset downloads on first use into MNE's cache; it is not vendored.
@@ -88,7 +88,7 @@ Above the 60% mean the subject requires.
 └── docs/
     ├── csp.org                       CSP derivation and verification notes
     ├── eegmmidb.org                  dataset layout
-    └── total_perspective_vortex.org  subject
+    └── total_perspective_vortex.org  the spec
 ```
 
 `fit_pipeline` and `score_stream` are pure — arrays in, numbers out. `train`, `predict` and `evaluate` are shells over them.
