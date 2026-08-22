@@ -80,7 +80,7 @@ def model_path(
 
 
 def make_pipeline(
-        n_components: int = 4
+        n_components: int
 ) -> Pipeline:
     """
     Build the CSP → LDA estimator.
@@ -91,7 +91,7 @@ def make_pipeline(
 
     Parameters
     ----------
-    n_components : int, default=4
+    n_components : int
         Number of spatial filters kept by ``MyCSP``. Must be even.
 
     Returns
