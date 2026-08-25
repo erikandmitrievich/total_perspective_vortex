@@ -28,10 +28,6 @@ class MyCSP(BaseEstimator, TransformerMixin):
     log : bool, default=True
         Log-transform the band-power features. Recommended for linear
         classifiers.
-    reg : float or None, default=None
-        Shrinkage coefficient in [0, 1] applied to each class covariance:
-        ``(1 - reg) * cov + reg * mean(diag(cov)) * I``. Use a small value
-        (e.g. 0.01) when the data is rank-deficient.
 
     Attributes
     ----------
@@ -48,11 +44,9 @@ class MyCSP(BaseEstimator, TransformerMixin):
 
     def __init__(self,
                  n_components=4,
-                 log=True,
-                 reg=None):
+                 log=True):
         self.n_components = n_components
         self.log = log
-        self.reg = reg
 
     def _covariance(self,
                     X: npt.NDArray[np.float64]
@@ -71,13 +65,11 @@ class MyCSP(BaseEstimator, TransformerMixin):
         Returns
         -------
         cov : ndarray, shape (n_channels, n_channels)
-            Covariance matrix, shrunk towards the identity if ``reg`` is set.
+            Covariance matrix.
         """
         n_channels = X.shape[1]
         Z = X.transpose(1, 0, 2).reshape(n_channels, -1)
         cov = np.matmul(Z, Z.T) / (Z.shape[1] - 1)
-        if self.reg is not None:
-            cov = (1 - self.reg) * cov + self.reg * np.trace(cov) / n_channels * np.eye(n_channels)
         return cov
 
     def fit(self,
@@ -112,21 +104,23 @@ class MyCSP(BaseEstimator, TransformerMixin):
             distinct labels.
         """
         if self.n_components % 2 != 0:
-            raise ValueError(f"n_components must be even, got {self.n_components}")
+            raise ValueError("n_components must be even, "
+                             f"got {self.n_components}")
         classes = np.unique(y)
         if len(classes) != 2:
-            raise ValueError(f"MyCSP requires exactly 2 classes, got {len(classes)}")
+            raise ValueError("MyCSP requires exactly 2 classes, "
+                             f"got {len(classes)}")
 
         self.classes_ = classes
         S_0 = self._covariance(X[y == classes[0]])
         S_1 = self._covariance(X[y == classes[1]])
 
-        evals, evecs = eigh(S_0, S_0 + S_1)
+        eigvals, eigvecs = eigh(S_0, S_0 + S_1)
 
-        order = np.argsort(evals)[::-1]
-        self.evals_ = evals[order]
-        self.filters_ = evecs[:, order].T
-        self.patterns_ = np.linalg.pinv(evecs[:, order])
+        order = np.argsort(eigvals)[::-1]
+        self.eigvals_ = eigvals[order]
+        self.filters_ = eigvecs[:, order].T
+        self.patterns_ = np.linalg.pinv(eigvecs[:, order])
         return self
 
     def transform(self,
