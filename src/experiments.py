@@ -31,7 +31,12 @@ CLI, see ``runs_for``.
 """
 
 SUBJECTS = range(1, 110)
-"""Subject numbers the sweep iterates, in ascending order."""
+"""
+The dataset's subject numbering.
+
+Single source for the valid range: the sweep iterates it in full, and both
+CLIs validate against it.
+"""
 
 
 def runs_for(run: int) -> list[int]:

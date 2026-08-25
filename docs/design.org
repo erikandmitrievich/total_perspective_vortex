@@ -1,5 +1,9 @@
 #+title: Design
 
+* Infrastructure
+
+Deferred until the per-module descriptions are complete.
+
 * Builtins and externals
 
 ** argparse
@@ -40,11 +44,11 @@ An entrypoint of the project.
 
 Is called from =main()=. Main purpose is to parse the given =argv=.
 
-Creates an object =parser= (from module =argparse=). Defines arguments with validation and constraints (relative to subject, run, and mode). Parses according to outlined parser configuration (=parser.parse_args(argv)=). Goes through another validation step (checks non empty argument count, subject and run number ranges). Returns parsed arguments.
+Creates an object =parser= (from module =argparse=). Defines arguments with validation and constraints (relative to subject, run, and mode). Parses according to outlined parser configuration (=parser.parse_args(argv)=). Goes through another validation step: subject against =SUBJECTS=, and run by membership in a =BASE_GROUPS= entry — delegated to =runs_for=, whose =ValueError= is surfaced as a usage error. Stores the resolved group in =args.runs=. Returns parsed arguments.
 
 ** =main(argv)=
 
-Calles =parse_args(argv)=. Parsed arguments branch program to 3 paths:
+Calls =parse_args(argv)=. Parsed arguments branch program to 3 paths:
 
 - =args.subject == None=
 
@@ -52,11 +56,11 @@ Calles =parse_args(argv)=. Parsed arguments branch program to 3 paths:
 
 - =args.mode == "train"=
 
-  Calls =train(args.subject, runs_for(args.run))=.
+  Calls =train(args.subject, args.runs)=.
 
 - =args.mode == "predict"=
 
-  Calls =predict(args.subject, runs_for(args.run))=.
+  Calls =predict(args.subject, args.runs)=.
 
 * [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]]
 
@@ -64,8 +68,7 @@ Heart of project. A from scratch implementation of CSP dimensionality reduction 
 
 ** =MyCSP(BaseEstimator, TransformerMixin)=
 
-A class, inherits from =BaseExtimator= and =TransformerMixin=.
-
+A class, inherits from =BaseEstimator= and =TransformerMixin=.
 
 *** =__init__(n_components, log)=
 
@@ -75,14 +78,12 @@ Initialises self attributes from given arguments.
 
 Gets the number of channels (=n_channels=). Reshapes the 3D tensor from =(epochs, channels, time)= to a 2D matrix of shape =(channels, epochs * time)= through tensor transposition and flattening. This concatenates the time-series of all epochs. Calculates covariance matrix (see "Concatenation estimator" from [[file:csp.org][csp.org]]).
 
-Gets the number of channels (=n_channels=). Reshapes the 3D tensor from =(epochs, channels, time)= to a 2D matrix of shape =(channels, epochs * time)= through tensor transposition and flattening. This concatenates the time-series of all epochs. Calculates covariance matrix (see "Concatenation estimator" from [[file:csp.org][csp.org]]).
-
 *** =fit(X, y)=
 
-Validates =n_components= is even and =classes= count being exactly 2. Assigns =self.classes_=, and calculates covariance matrices for different classes (=S_0=, =S_1=). Calls =eigh(S_0, S_0 + S_1)= and obtains eigenvalues and eigenvectors: =eigvals=, =eigvecs= (see "Why =eigh= is the right solver" from [[file:csp.org][csp.org]]). Stores descendingly ordered eigenvalues and eigenvectors in =self.eigvals_= and =self.filters_= (=self.filters_= is sorted by columns eigenvector matrix). In parallel, stores pseudo-inverse of spatial filters (used in [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]]).
+Validates =n_components= is even and =classes= count being exactly 2. Assigns =self.classes_=, and calculates covariance matrices for different classes (=S_0=, =S_1=). Calls =eigh(S_0, S_0 + S_1)= and obtains eigenvalues and eigenvectors: =eigvals=, =eigvecs= (see "Why =eigh= is the right solver" from [[file:csp.org][csp.org]]). Stores descendingly ordered eigenvalues and eigenvectors in =self.eigvals_= and =self.filters_= (=self.filters_= holds the eigenvectors as rows; see "Convention warning" from [[file:csp.org][csp.org]]). In parallel, stores pseudo-inverse of spatial filters in =self.patterns_= — what a topomap should display; nothing consumes it yet.
 
-Summing up, it calculates filter matrix which will be used to reduce dimensionality of raw epoch data. Its the main function of CSP.
+Summing up, it calculates filter matrix which will be used to reduce dimensionality of raw epoch data. It's the main function of CSP.
 
 *** =transform(X)=
 
-Verifies the model is fitted using =check_is_fitted(self)= (which ensures the required learned attributes exist). Selects the leftmost and rightmost filters, as they produce the most discriminative variance between the two classes. Projects the raw data onto these selected filters (resulting in =X_prj=). Calculates the =features= array (of length =n_components=), where each value essentially represents the energy (variance) of the filtered brain activity. Finally, if =self.log= is set to =True=, a log transformation is applied to the features to compress extreme spikes and create a normal (bell-curve) distribution, which is much easier for linear classifiers to process. Returns features.
+Verifies the model is fitted using =check_is_fitted(self)= (which ensures the required learned attributes exist). Selects the leftmost and rightmost filters, as they produce the most discriminative variance between the two classes. Projects the raw data onto these selected filters (resulting in =X_prj=). Calculates the =features= array of shape =(n_epochs, n_components)=, where each value essentially represents the energy (variance) of the filtered brain activity for one component of one epoch. Finally, if =self.log= is set to =True=, a log transformation is applied to the features to compress extreme spikes and create a normal (bell-curve) distribution, which is much easier for linear classifiers to process. Returns features.

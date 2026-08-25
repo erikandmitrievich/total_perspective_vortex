@@ -37,3 +37,5 @@
 - [X] Add module docstrings.
 
 - [X] Add readme.
+
+- [ ] Implement additional visualisation based on pseudo-inverse spatial patterns.

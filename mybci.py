@@ -10,7 +10,7 @@ import sys
 
 import mne
 
-from src.experiments import runs_for
+from src.experiments import SUBJECTS, runs_for
 from src.predict import predict
 from src.sweep import run_full_sweep
 from src.train import train
@@ -33,14 +33,17 @@ def parse_args(
     Returns
     -------
     args : argparse.Namespace
-        Holds ``subject``, ``run`` and ``mode`` — either all set or all None.
+        Holds ``subject``, ``run``, ``mode`` and ``runs`` — the first three
+        either all set or all None, ``runs`` the base group ``run`` belongs
+        to (``None`` when no job was selected)
 
     Raises
     ------
     SystemExit
-        On a partially filled group, ``subject`` outside 1-109, ``runs``
-        outside the ``BASE_GROUP``, or an invalid ``mode``. ``run`` is not
-        range-checked here.
+        On a partially filled group, ``subject`` outside 1-109, ``run`` not
+        a member of any ``BASE_GROUPS`` entry, or an invalid ``mode``. Run
+        validity is membership, not range — the check is ``runs_for``'s and
+        is surfaced here as a usage error.
     """
     parser = argparse.ArgumentParser(prog="mybci.py")
     parser.add_argument("subject", type=int, nargs="?", default=None,
@@ -59,9 +62,9 @@ def parse_args(
             "or none at all"
         )
 
-    if args.subject is not None:
-        if not (1 <= args.subject <= 109):
-            parser.error("subject must be between 1 and 109")
+        if args.subject not in SUBJECTS:
+            parser.error("subject must be between "
+                         f"{SUBJECTS.start} and {SUBJECTS.stop - 1}")
         try:
             args.runs = runs_for(args.run)
         except ValueError as e:
@@ -92,9 +95,9 @@ def main(
     if args.subject is None:
         run_full_sweep()
     elif args.mode == "train":
-        train(args.subject, runs_for(args.run))
+        train(args.subject, args.runs)
     else:
-        predict(args.subject, runs_for(args.run))
+        predict(args.subject, args.runs)
 
 
 if __name__ == "__main__":

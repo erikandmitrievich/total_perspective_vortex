@@ -31,10 +31,10 @@ class MyCSP(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    evals_ : ndarray, shape (n_channels,)
+    eigvals_ : ndarray, shape (n_channels,)
         Generalised eigenvalues from ``fit``, descending.
     filters_ : ndarray, shape (n_channels, n_channels)
-        Spatial filters as rows, ordered to match ``evals_``.
+        Spatial filters as rows, ordered to match ``eigvals_``.
     classes_ : ndarray, shape (2,)
         The two class labels, sorted ascending. Leading filters maximise
         variance for ``classes_[0]``.
