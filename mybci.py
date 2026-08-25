@@ -38,25 +38,36 @@ def parse_args(
     Raises
     ------
     SystemExit
-        On a partially filled group, ``subject`` outside 1-109, or an invalid
-        ``mode``. ``run`` is not range-checked here.
+        On a partially filled group, ``subject`` outside 1-109, ``runs``
+        outside the ``BASE_GROUP``, or an invalid ``mode``. ``run`` is not
+        range-checked here.
     """
     parser = argparse.ArgumentParser(prog="mybci.py")
     parser.add_argument("subject", type=int, nargs="?", default=None,
                         help="Subject number (1-109)")
     parser.add_argument("run", type=int, nargs="?", default=None,
                         help="Experiment/run number")
-    parser.add_argument("mode", choices=["train", "predict"], nargs="?", default=None,
-                        help="train or predict")
+    parser.add_argument("mode", choices=["train", "predict"], nargs="?",
+                        default=None, help="train or predict")
 
     args = parser.parse_args(argv)
 
     given = [args.subject, args.run, args.mode]
     if any(v is not None for v in given) and any(v is None for v in given):
-        parser.error("subject, run and mode must all be given together, or none at all")
+        parser.error(
+            "subject, run and mode must all be given together, "
+            "or none at all"
+        )
 
-    if args.subject is not None and not (1 <= args.subject <= 109):
-        parser.error("subject must be between 1 and 109")
+    if args.subject is not None:
+        if not (1 <= args.subject <= 109):
+            parser.error("subject must be between 1 and 109")
+        try:
+            args.runs = runs_for(args.run)
+        except ValueError as e:
+            parser.error(str(e))
+    else:
+        args.runs = None
 
     return args
 
