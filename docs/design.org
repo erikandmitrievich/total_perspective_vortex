@@ -1,0 +1,28 @@
+#+title: Design
+
+
+* [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]]
+
+An entrypoint of the project.
+
+** =parse_args(argv)=
+
+Is called from =main()=. Main purpose is to parse the given =argv=.
+
+Creates an object =parser= (from module =argparse=). Defines arguments with validation and constraints (relative to subject, run, and mode). Parses according to outlined parser configuration (=parser.parse_args(argv)=). Goes through another validation step (checks non empty argument count, subject and run number ranges). Returns parsed arguments.
+
+** =main(argv)=
+
+Calles =parse_args(argv)=. Parsed arguments branch program to 3 paths:
+
+- =args.subject == None=
+
+  Calls =run_full_sweep()=.
+
+- =args.mode == "train"=
+
+  Calls =train(args.subject, runs_for(args.run))=.
+
+- =args.mode == "predict"=
+
+  Calls =predict(args.subject, runs_for(args.run))=.
