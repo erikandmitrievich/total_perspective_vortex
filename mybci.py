@@ -56,21 +56,23 @@ def parse_args(
     args = parser.parse_args(argv)
 
     given = [args.subject, args.run, args.mode]
-    if any(v is not None for v in given) and any(v is None for v in given):
-        parser.error(
-            "subject, run and mode must all be given together, "
-            "or none at all"
-        )
 
-        if args.subject not in SUBJECTS:
-            parser.error("subject must be between "
-                         f"{SUBJECTS.start} and {SUBJECTS.stop - 1}")
-        try:
-            args.runs = runs_for(args.run)
-        except ValueError as e:
-            parser.error(str(e))
-    else:
+    if any(v is None for v in given):
+        if any(v is not None for v in given):
+            parser.error(
+                "subject, run and mode must all be given together, "
+                "or none at all"
+            )
         args.runs = None
+        return args
+
+    if args.subject not in SUBJECTS:
+        parser.error("subject must be between "
+                     f"{SUBJECTS.start} and {SUBJECTS.stop - 1}")
+    try:
+        args.runs = runs_for(args.run)
+    except ValueError as e:
+        parser.error(str(e))
 
     return args
 
