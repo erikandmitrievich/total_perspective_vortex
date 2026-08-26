@@ -26,6 +26,7 @@ from src.data import DEFAULT, PreprocConfig, load_dataset
 @dataclass(frozen=True)
 class FitConfig:
     """
+
     Split and estimator parameters shared by training and the sweep.
 
     Persisted alongside the fitted model, but never read back:
@@ -85,19 +86,21 @@ def make_pipeline(
     """
     Build the CSP → LDA estimator.
 
-    Single definition of the pipeline: ``train`` and the sweep both build
-    it here, so no caller can drift on hyperparameters. ``predict`` does
-    not build one at all — it unpickles the estimator fitted by ``train``.
+    The single definition of the model, named so it is findable without
+    reading ``fit_pipeline``. LDA consumes ``MyCSP``'s log band power:
+    the log is what makes those features approximately Gaussian, which
+    is what LDA assumes.
 
     Parameters
     ----------
     n_components : int
-        Number of spatial filters kept by ``MyCSP``. Must be even.
+        Number of spatial filters kept by ``MyCSP``. Must be even;
+        ``MyCSP.fit`` raises otherwise.
 
     Returns
     -------
     clf : Pipeline
-        Unfitted estimator, clonable by ``cross_val_score``.
+        Unfitted, so ``cross_val_score`` can clone it.
     """
     return Pipeline([
         ("CSP", MyCSP(n_components=n_components)),
@@ -150,7 +153,8 @@ def fit_pipeline(
     )
 
     clf = make_pipeline(fit.n_components)
-    cv = StratifiedShuffleSplit(fit.n_splits, test_size=fit.test_size, random_state=fit.seed)
+    cv = StratifiedShuffleSplit(fit.n_splits, test_size=fit.test_size,
+                                random_state=fit.seed)
     scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=cv)
     clf.fit(X[train_idx], y[train_idx])
     return clf, train_idx, np.sort(test_idx), scores
@@ -203,7 +207,7 @@ def train(
     joblib.dump(
         {
             "pipeline": clf,
-            "config": config,        # predict must preprocess identically
+            "config": config,
             "fit": fit,
             "subject": subject,
             "runs": runs,

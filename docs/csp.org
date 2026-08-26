@@ -2,19 +2,9 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-07-16>
-#+lastmod: <2026-08-22>
-#+latex: \newpage
-#+latex_header: \setlength{\parindent}{0pt}
-#+latex_header: \setlength{\parskip}{1em}
-#+latex_header: \usepackage{amsmath}
-#+latex_header: \usepackage{amssymb}
-#+latex_header: \usepackage{mathtools}
-#+latex_header: \usepackage{amsthm}
-#+latex_header: \usepackage[margin=1in]{geometry}
-#+options: num:t tags:nil
-#+property: header-args :eval never-export
-#+startup: overview latexpreview inlineimages
-#+columns: %50ITEM(Item) %8LECTURE_REF(Lecture) %34CUSTOM_ID(ID)
+#+lastmod: <2026-08-26 18:53>
+#+options: toc:nil num:nil tags:nil
+#+startup: overview inlineimages
 
 * Supplementary
 

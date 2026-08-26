@@ -1,4 +1,10 @@
 #+title: Design
+#+author: Erik An
+#+email: obluda2173@gmail.com
+#+date: <2026-08-26>
+#+lastmod: <2026-08-26 19:45>
+#+options: toc:nil num:nil tags:nil
+#+startup: overview inlineimages
 
 * Infrastructure
 
@@ -33,6 +39,32 @@ Deferred until the per-module descriptions are complete.
 *** utils.validation
 
 - check_is_fitted
+
+*** pipeline
+
+- Pipeline
+
+** joblib
+
+** dataclasses
+
+*** dataclass
+
+** pathlib
+
+*** Path
+
+** sklearn
+
+*** discriminant_analysis
+
+- LinearDiscriminantAnalysis
+
+*** model_selection
+
+- StratifiedShuffleSplit,
+- cross_val_score,
+- train_test_split,
 
 ** tmp
 
@@ -87,3 +119,42 @@ Summing up, it calculates filter matrix which will be used to reduce dimensional
 *** =transform(X)=
 
 Verifies the model is fitted using =check_is_fitted(self)= (which ensures the required learned attributes exist). Selects the leftmost and rightmost filters, as they produce the most discriminative variance between the two classes. Projects the raw data onto these selected filters (resulting in =X_prj=). Calculates the =features= array of shape =(n_epochs, n_components)=, where each value essentially represents the energy (variance) of the filtered brain activity for one component of one epoch. Finally, if =self.log= is set to =True=, a log transformation is applied to the features to compress extreme spikes and create a normal (bell-curve) distribution, which is much easier for linear classifiers to process. Returns features.
+
+** TODO why inherits?
+
+* [[file:~/personal/projects/42/total_perspective_vortex/src/train.py][train.py]]
+
+Where training happens.
+
+** =FitConfig=
+
+Stores default split and estimator parameters used for training and sweep.
+
+- =n_components= is responsible for the number of filters to be applied.
+- =test_size= for the fraction of whole data to be used for test validation.
+- =n_splits= for number of validation tests.
+- =random_state= is the seed used for reproducibility.
+
+** =model_path(subject, runs)=
+
+Uses global =MODELS_DIR= to construct a path to a fitted model. Used in writing and reading fitted models by =train(...)= and =predict(...)=.
+
+** =make_pipeline(n_components)=
+
+Just returns the =Pipeline= object. Exists for convenience.
+
+** =fit_pipeline(X, y, fit)=
+
+Split the
+
+=idx= represent array of indices (of labels). =train_split(...)= performs split of indices based on given arguments into train and validation.
+
+- =test_size= for training and validation ratio
+- =stratify= for keeping the original class ratio
+- =random_state= for random state
+
+Then makes a pipeline along with cross-validation object (=cv=). =scores= then stores accuracy of each fold (for =cv=). And finally, fits the model with =fit(...)= and returns a classifier (=clf=), train indices (=train_idx=), sorted test indices (=test_idx=), and scores.
+
+** =train(subject, runs, config, fit, verbose)=
+
+Performs loading of raw data and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with necessary for predicting data. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
