@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-26 19:45>
+#+lastmod: <2026-08-26 20:01>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -44,18 +44,6 @@ Deferred until the per-module descriptions are complete.
 
 - Pipeline
 
-** joblib
-
-** dataclasses
-
-*** dataclass
-
-** pathlib
-
-*** Path
-
-** sklearn
-
 *** discriminant_analysis
 
 - LinearDiscriminantAnalysis
@@ -65,6 +53,16 @@ Deferred until the per-module descriptions are complete.
 - StratifiedShuffleSplit,
 - cross_val_score,
 - train_test_split,
+
+** joblib
+
+** dataclasses
+
+*** dataclass
+
+** pathlib
+
+*** Path
 
 ** tmp
 
@@ -131,9 +129,9 @@ Where training happens.
 Stores default split and estimator parameters used for training and sweep.
 
 - =n_components= is responsible for the number of filters to be applied.
-- =test_size= for the fraction of whole data to be used for test validation.
+- =test_size= for the holdout fraction and the validation fraction inside each cv split.
 - =n_splits= for number of validation tests.
-- =random_state= is the seed used for reproducibility.
+- =seed= is the seed used for reproducibility.
 
 ** =model_path(subject, runs)=
 
@@ -145,11 +143,9 @@ Just returns the =Pipeline= object. Exists for convenience.
 
 ** =fit_pipeline(X, y, fit)=
 
-Split the
+=idx= represent array of indices (of labels). =train_split(...)= performs split of indices based on given arguments into train and test.
 
-=idx= represent array of indices (of labels). =train_split(...)= performs split of indices based on given arguments into train and validation.
-
-- =test_size= for training and validation ratio
+- =test_size= for training and test ratio
 - =stratify= for keeping the original class ratio
 - =random_state= for random state
 
@@ -157,4 +153,4 @@ Then makes a pipeline along with cross-validation object (=cv=). =scores= then s
 
 ** =train(subject, runs, config, fit, verbose)=
 
-Performs loading of raw data and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with necessary for predicting data. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
+Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with necessary for predicting data. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
