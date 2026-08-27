@@ -50,4 +50,6 @@
 
 - [ ] Go through each doctring and remove the unnecessary (perhaps with llm assistance)
 
-- [ ] Assess the need of the tmin and tmax in [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]. As it is made solely for plotting.
+- [X] Assess the need of the tmin and tmax in [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]. As it is made solely for plotting.
+
+  Dropped crop_tmin and crop_tmax.
