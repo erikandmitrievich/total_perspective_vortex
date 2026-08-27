@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 13:11>
+#+lastmod: <2026-08-27 13:22>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -167,23 +167,22 @@ Enters a for loop of test indices. Measures start time, stores predicted class f
 
 Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset (reloads unders persisted from model config). Checks model loaded indices length matches dataset loaded truth length (prevents different epochs comparison). Runs =score_stream= and returns accuracy.
 
-
 * [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
 
-A place that defines experiments of [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]].
+Defines run groups. Imported by [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]], [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
 
 ** =BASE_GROUPS=
 
-Defines the base groups of raw EEG data: tells which records belong to which group.
+The four task groups, as =(runs, label)= pairs (see [[file:eegmmidb.org][eegmmidb.org]]). Each group is one task repeated three times, so T1 and T2 keep one meaning across all three runs, which is what allows concatenation. Labels are printed by the sweep.
 
 ** =EXPERIMENTS=
 
-Defines experiments for =run_full_sweep()=. Just adds additional two experiments, on top of case groups.
+Defines experiments for =run_full_sweep()=. Just adds additional two experiments on top of base groups, each pairing an executed group with its imagined counterpart.
 
 ** =SUBJECTS=
 
-Merely a range of subjects. Exists for coherence.
+Merely a range of subjects. Exists for coherence: both CLIs validate against it, =run_full_sweep()= iterates it.
 
 ** =runs_for(run)=
 
-Expands =run= to =runs=. When in =predict= -> =train= pipeline, converts =run = 3= to =runs = [3, 7, 11]=. Non-explicit requirement from the [[file:subject.org][subject.org]]. In case not found, raises an error.
+Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] (=train=, =predict=) and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
