@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 17:33>
+#+lastmod: <2026-08-27 17:41>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -10,80 +10,41 @@
 
 Deferred until the per-module descriptions are complete.
 
-* Builtins and externals
+* Builtins
 
 ** argparse
-
 ** sys
+** time
+** dataclasses
+- dataclass
+** pathlib
+- Path
+
+* Externals
 
 ** mne
-
-*** Epochs
-
-*** pick_types
-
-*** channels
-
-- make_standard_montage
-
-*** datasets
-
-- eegbci
-
-*** io
-
-- concatenate_raws
-
-- read_raw_edf
-
+- Epochs
+- pick_types
+- channels.make_standard_montage
+- datasets.eegbci
+- io.concatenate_raws
+- io.read_raw_edf
 ** numpy
-
-*** typing
-
+- typing
 ** scipy
-
-*** linalg
-
-- eigh
-
+- linalg.eigh
 ** sklearn
-
-*** base
-
-- BaseEstimator
-
-- TransformerMixin
-
-*** utils.validation
-
-- check_is_fitted
-
-*** pipeline
-
-- Pipeline
-
-*** discriminant_analysis
-
-- LinearDiscriminantAnalysis
-
-*** model_selection
-
-- StratifiedShuffleSplit,
-- cross_val_score,
-- train_test_split,
-
+- base.BaseEstimator
+- base.TransformerMixin
+- discriminant_analysis.LinearDiscriminantAnalysis
+- model_selection.StratifiedShuffleSplit
+- model_selection.cross_val_score
+- model_selection.train_test_split
+- pipeline.Pipeline
+- utils.validation.check_is_fitted
 ** joblib
-
-** dataclasses
-
-*** dataclass
-
-** pathlib
-
-*** Path
-
-** time
-
+** matplotlib
+- pyplot
 * [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
 
 Defines run groups. Imported by [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]], [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
