@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 16:12>
+#+lastmod: <2026-08-27 17:00>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -17,6 +17,24 @@ Deferred until the per-module descriptions are complete.
 ** sys
 
 ** mne
+
+*** Epochs
+
+*** pick_types
+
+*** channels
+
+- make_standard_montage
+
+*** datasets
+
+- eegbci
+
+*** io
+
+- concatenate_raws
+
+- read_raw_edf
 
 ** numpy
 
@@ -200,3 +218,52 @@ Loads epochs and labels under given config. Fits pipeline with =cross_validate=F
 Goes through each experiment, always on defaults. For each experiment calculates accuracy of each subject, prints it out. Calculates the mean accuracy per experiment, prints it as well. Calculates mean accuracy across experiments, prints it as well.
 
 Each cell is wrapped in =try/except=, so one bad subject cannot kill the run; failures are printed at the end and the experiment mean is taken over successful cells only, hence the =n== in the output. Returns the per-experiment means as a list.
+
+* [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]
+
+Where the data comes from.
+
+** =PreprocConfig=
+
+Default preprocessing parameters.
+
+- =l_freq=: lower bound useful frequency
+- =h_freq=: upper bound useful frequency
+- =tmin=: 1 second before event starts
+- =tmax=: 2 seconds after event starts
+- =crop_tmin=: start of the feature window inside the epoch (=None= disables cropping)
+- =crop_tmax=: end of the feature window, so features come from 1-2 s post-onset only
+- =montage=: standard electrode layout, attached for channel positions
+- =fir_design=: FIR design forwarded to =Raw.filter=
+
+** =DEFAULT=
+
+Just a default instance of =PreprocConfig=.
+
+** =EVENT_ID=
+
+Events code, pinned: T1 -> 1, T2 -> 2.
+
+** =load_raw(subject, runs, *, path)=
+
+Gets raw file names of subject's runs (=raw_fnames=). Reads and concatenates raw data from =raw_fnames= to =raw=. Returns =raw=. No filtering, so it also serves the "before" panel of the PSD figure.
+
+** =preprocess(raw, config)=
+
+Makes a copy of a =raw=, calls it =filtered=. Standardizes, sets a montage, and applies a filter. Returns =filtered=.
+
+** =make_epochs(filtered, config)=
+
+Selects solely eeg from filtered, calls it =picks=. Gets the =events= via =events_from_annotations= with the pinned =EVENT_ID=. Creates epochs. Returns them.
+
+** =_labels_from_events(epochs)=
+
+Just returns shifted event labels to comply with project notation.
+
+** =crop(epochs, config)=
+
+Crops epochs based on =crop_tmin= and =crop_tmax=.
+
+** =load_dataset(subject, runs, config, *, path)=
+
+Gets =raw=. Creates cropped epochs. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
