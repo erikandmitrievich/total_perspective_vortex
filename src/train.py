@@ -203,7 +203,7 @@ def train(
     config : PreprocConfig
         Preprocessing parameters; persisted so ``predict`` reproduces them.
     fit : FitConfig
-        Split and estimator parameters. Not persisted.
+        Split and estimator parameters. Persisted, never read back.
     verbose : bool, default=True
         Print the per-fold scores and their mean in the subject's format.
 

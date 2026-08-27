@@ -40,9 +40,13 @@
 
 - [ ] Implement additional visualisation based on pseudo-inverse spatial patterns.
 
-- [ ] Check the necessity of fit, subject, runs, cv_scores in joblib.
+- [X] Check the necessity of fit, subject, runs, cv_scores in joblib.
 
-- [ ] Check the necessity of returning =float(scores.mean())= in =train(...)=.
+  Decided to keep it.
+
+- [X] Check the necessity of returning =float(scores.mean())= in =train(...)=.
+
+  Just for testing. Good practice to keep.
 
 - [ ] Go through each doctring and remove the unnecessary (perhaps with llm assistance)
 

@@ -33,14 +33,10 @@ class PreprocConfig:
         Band-pass edges in Hz. Defaults cover mu and beta (7-30 Hz), the
         bands carrying motor-imagery power modulation.
     tmin, tmax : float
-        Epoch bounds in seconds relative to event onset. ``tmax=2.0``
+        Feature window in seconds relative to event onset. ``tmax=2.0``
         keeps the window short enough to fit inside every trial; a longer
         window makes epochs adjacent to a run boundary overrun it, and MNE
-        drops them without raising. ``tmin=-1.0`` yields no features
-        (cropping and ``baseline=None`` discard it) but drops events within
-        1 s of the recording start.
-    crop_tmin, crop_tmax : float or None
-        Feature window inside the epoch. ``crop_tmin=None`` disables cropping.
+        drops them without raising.
     montage : str
         Standard montage name passed to ``make_standard_montage``.
     fir_design : str
@@ -48,10 +44,8 @@ class PreprocConfig:
     """
     l_freq:     float = 7.0
     h_freq:     float = 30.0
-    tmin:       float = -1.0
+    tmin:       float = 1.0
     tmax:       float = 2.0
-    crop_tmin:  float | None = 1.0
-    crop_tmax:  float | None = 2.0
     montage:    str = "standard_1005"
     fir_design: str = "firwin"
 
@@ -201,31 +195,6 @@ def _labels_from_events(
     return epochs.events[:, -1] - 1
 
 
-def crop(
-        epochs: mne.Epochs,
-        config: PreprocConfig = DEFAULT
-) -> mne.Epochs:
-    """
-    Extract the feature window.
-
-    Parameters
-    ----------
-    epochs : mne.Epochs
-        Full-length epochs from ``make_epochs``.
-    config : PreprocConfig
-        Supplies ``crop_tmin``/``crop_tmax``.
-
-    Returns
-    -------
-    cropped : mne.Epochs
-        A cropped copy, leaving ``epochs`` unmodified — except when
-        ``crop_tmin is None``, where ``epochs`` itself is returned.
-    """
-    if config.crop_tmin is None:
-        return epochs
-    return epochs.copy().crop(config.crop_tmin, config.crop_tmax)
-
-
 def load_dataset(
         subject: int,
         runs: list[int],
@@ -234,7 +203,7 @@ def load_dataset(
         path: Path | None = None,
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], mne.Epochs]:
     """
-    Load, preprocess, epoch and crop — the entry point every caller uses.
+    Load, preprocess and epoch — the entry point every caller uses.
 
     Single definition of the preprocessing path. Tests and pipeline must
     both come through here; divergence between them is what previously
@@ -254,14 +223,14 @@ def load_dataset(
     Returns
     -------
     X : ndarray, shape (n_epochs, n_channels, n_times)
-        Cropped epoch data. This is the epochs' internal buffer, not a
+        Epoch data. This is the epochs' internal buffer, not a
         copy: mutating ``X`` mutates ``epochs``.
     y : ndarray of int, shape (n_epochs,)
         Labels in {0, 1}.
     epochs : mne.Epochs
-        Cropped epochs. Carries ``info`` for topomaps and ``events`` for
-        the truth column in ``predict``.
+        Carries ``info`` for topomaps and ``events`` for the truth
+        column in ``predict``.
     """
     raw = load_raw(subject, runs, path=path)
-    epochs = crop(make_epochs(preprocess(raw, config), config), config)
+    epochs = make_epochs(preprocess(raw, config), config)
     return epochs.get_data(copy=False), _labels_from_events(epochs), epochs

@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 17:41>
+#+lastmod: <2026-08-27 18:02>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -75,10 +75,8 @@ Default preprocessing parameters.
 
 - =l_freq=: lower bound useful frequency
 - =h_freq=: upper bound useful frequency
-- =tmin=: 1 second before event starts
-- =tmax=: 2 seconds after event starts
-- =crop_tmin=: start of the feature window inside the epoch (=None= disables cropping)
-- =crop_tmax=: end of the feature window, so features come from 1-2 s post-onset only
+- =tmin=: start of the feature window, 1 s post-onset
+- =tmax=: end of the feature window, 2 s post-onset
 - =montage=: standard electrode layout, attached for channel positions
 - =fir_design=: FIR design forwarded to =Raw.filter=
 
@@ -106,13 +104,10 @@ Selects solely eeg from filtered, calls it =picks=. Gets the =events= via =event
 
 Just returns shifted event labels to comply with project notation.
 
-** =crop(epochs, config)=
-
-Crops epochs based on =crop_tmin= and =crop_tmax=.
-
 ** =load_dataset(subject, runs, config, *, path)=
 
-Gets =raw=. Creates cropped epochs. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
+Gets =raw=. Preprocesses and epochs it. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
+
 * [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]]
 
 Heart of project. A from scratch implementation of CSP dimensionality reduction algorithm.
