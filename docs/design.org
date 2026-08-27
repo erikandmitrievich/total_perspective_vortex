@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 17:29>
+#+lastmod: <2026-08-27 17:33>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -84,32 +84,74 @@ Deferred until the per-module descriptions are complete.
 
 ** time
 
-* [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]]
+* [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
 
-An entrypoint of the project.
+Defines run groups. Imported by [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]], [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
 
-** =parse_args(argv)=
+** =BASE_GROUPS=
 
-Is called from =main()=. Main purpose is to parse the given =argv=.
+The four task groups, as =(runs, label)= pairs (see [[file:eegmmidb.org][eegmmidb.org]]). Each group is one task repeated three times, so T1 and T2 keep one meaning across all three runs, which is what allows concatenation. Labels are printed by the sweep.
 
-Creates an object =parser= (from module =argparse=). Defines arguments with validation and constraints (relative to subject, run, and mode). Parses according to outlined parser configuration (=parser.parse_args(argv)=). Goes through another validation step: subject against =SUBJECTS=, and run by membership in a =BASE_GROUPS= entry — delegated to =runs_for=, whose =ValueError= is surfaced as a usage error. Stores the resolved group in =args.runs=. Returns parsed arguments.
+** =EXPERIMENTS=
 
-** =main(argv)=
+Defines experiments for =run_full_sweep()=. Just adds additional two experiments on top of base groups, each pairing an executed group with its imagined counterpart.
 
-Calls =parse_args(argv)=. Parsed arguments branch program to 3 paths:
+** =SUBJECTS=
 
-- =args.subject == None=
+Merely a range of subjects. Exists for coherence: both CLIs validate against it, =run_full_sweep()= iterates it.
 
-  Calls =run_full_sweep()=.
+** =runs_for(run)=
 
-- =args.mode == "train"=
+Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] (=train=, =predict=) and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
 
-  Calls =train(args.subject, args.runs)=.
+* [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]
 
-- =args.mode == "predict"=
+Where the data comes from.
 
-  Calls =predict(args.subject, args.runs)=.
+** =PreprocConfig=
 
+Default preprocessing parameters.
+
+- =l_freq=: lower bound useful frequency
+- =h_freq=: upper bound useful frequency
+- =tmin=: 1 second before event starts
+- =tmax=: 2 seconds after event starts
+- =crop_tmin=: start of the feature window inside the epoch (=None= disables cropping)
+- =crop_tmax=: end of the feature window, so features come from 1-2 s post-onset only
+- =montage=: standard electrode layout, attached for channel positions
+- =fir_design=: FIR design forwarded to =Raw.filter=
+
+** =DEFAULT=
+
+Just a default instance of =PreprocConfig=.
+
+** =EVENT_ID=
+
+Events code, pinned: T1 -> 1, T2 -> 2.
+
+** =load_raw(subject, runs, *, path)=
+
+Gets raw file names of subject's runs (=raw_fnames=). Reads and concatenates raw data from =raw_fnames= to =raw=. Returns =raw=. No filtering, so it also serves the "before" panel of the PSD figure.
+
+** =preprocess(raw, config)=
+
+Makes a copy of a =raw=, calls it =filtered=. Standardizes, sets a montage, and applies a filter. Returns =filtered=.
+
+** =make_epochs(filtered, config)=
+
+Selects solely eeg from filtered, calls it =picks=. Gets the =events= via =events_from_annotations= with the pinned =EVENT_ID=. Creates epochs. Returns them.
+
+** =_labels_from_events(epochs)=
+
+Just returns shifted event labels to comply with project notation.
+
+** =crop(epochs, config)=
+
+Crops epochs based on =crop_tmin= and =crop_tmax=.
+
+** =load_dataset(subject, runs, config, *, path)=
+
+Gets =raw=. Creates cropped epochs. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
 * [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]]
 
 Heart of project. A from scratch implementation of CSP dimensionality reduction algorithm.
@@ -185,26 +227,6 @@ Enters a for loop of test indices. Measures start time, stores predicted class f
 
 Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset (reloads unders persisted from model config). Checks model loaded indices length matches dataset loaded truth length (prevents different epochs comparison). Runs =score_stream= and returns accuracy.
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
-
-Defines run groups. Imported by [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]], [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
-
-** =BASE_GROUPS=
-
-The four task groups, as =(runs, label)= pairs (see [[file:eegmmidb.org][eegmmidb.org]]). Each group is one task repeated three times, so T1 and T2 keep one meaning across all three runs, which is what allows concatenation. Labels are printed by the sweep.
-
-** =EXPERIMENTS=
-
-Defines experiments for =run_full_sweep()=. Just adds additional two experiments on top of base groups, each pairing an executed group with its imagined counterpart.
-
-** =SUBJECTS=
-
-Merely a range of subjects. Exists for coherence: both CLIs validate against it, =run_full_sweep()= iterates it.
-
-** =runs_for(run)=
-
-Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] (=train=, =predict=) and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
-
 * [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]]
 
 Brings everything together and outputs — this is what discharges the 60% requirement. Unlike =train= -> =predict=, goes through =fit_pipeline= -> =score_stream=, dodging the disk round trip.
@@ -219,51 +241,28 @@ Goes through each experiment, always on defaults. For each experiment calculates
 
 Each cell is wrapped in =try/except=, so one bad subject cannot kill the run; failures are printed at the end and the experiment mean is taken over successful cells only, hence the =n== in the output. Returns the per-experiment means as a list.
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]
+* [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]]
 
-Where the data comes from.
+An entrypoint of the project.
 
-** =PreprocConfig=
+** =parse_args(argv)=
 
-Default preprocessing parameters.
+Is called from =main()=. Main purpose is to parse the given =argv=.
 
-- =l_freq=: lower bound useful frequency
-- =h_freq=: upper bound useful frequency
-- =tmin=: 1 second before event starts
-- =tmax=: 2 seconds after event starts
-- =crop_tmin=: start of the feature window inside the epoch (=None= disables cropping)
-- =crop_tmax=: end of the feature window, so features come from 1-2 s post-onset only
-- =montage=: standard electrode layout, attached for channel positions
-- =fir_design=: FIR design forwarded to =Raw.filter=
+Creates an object =parser= (from module =argparse=). Defines arguments with validation and constraints (relative to subject, run, and mode). Parses according to outlined parser configuration (=parser.parse_args(argv)=). Goes through another validation step: subject against =SUBJECTS=, and run by membership in a =BASE_GROUPS= entry — delegated to =runs_for=, whose =ValueError= is surfaced as a usage error. Stores the resolved group in =args.runs=. Returns parsed arguments.
 
-** =DEFAULT=
+** =main(argv)=
 
-Just a default instance of =PreprocConfig=.
+Calls =parse_args(argv)=. Parsed arguments branch program to 3 paths:
 
-** =EVENT_ID=
+- =args.subject == None=
 
-Events code, pinned: T1 -> 1, T2 -> 2.
+  Calls =run_full_sweep()=.
 
-** =load_raw(subject, runs, *, path)=
+- =args.mode == "train"=
 
-Gets raw file names of subject's runs (=raw_fnames=). Reads and concatenates raw data from =raw_fnames= to =raw=. Returns =raw=. No filtering, so it also serves the "before" panel of the PSD figure.
+  Calls =train(args.subject, args.runs)=.
 
-** =preprocess(raw, config)=
+- =args.mode == "predict"=
 
-Makes a copy of a =raw=, calls it =filtered=. Standardizes, sets a montage, and applies a filter. Returns =filtered=.
-
-** =make_epochs(filtered, config)=
-
-Selects solely eeg from filtered, calls it =picks=. Gets the =events= via =events_from_annotations= with the pinned =EVENT_ID=. Creates epochs. Returns them.
-
-** =_labels_from_events(epochs)=
-
-Just returns shifted event labels to comply with project notation.
-
-** =crop(epochs, config)=
-
-Crops epochs based on =crop_tmin= and =crop_tmax=.
-
-** =load_dataset(subject, runs, config, *, path)=
-
-Gets =raw=. Creates cropped epochs. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
+  Calls =predict(args.subject, args.runs)=.
