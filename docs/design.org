@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-26 20:01>
+#+lastmod: <2026-08-27 12:17>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -64,7 +64,7 @@ Deferred until the per-module descriptions are complete.
 
 *** Path
 
-** tmp
+** time
 
 * [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]]
 
@@ -151,6 +151,16 @@ Just returns the =Pipeline= object. Exists for convenience.
 
 Then makes a pipeline along with cross-validation object (=cv=). =scores= then stores accuracy of each fold (for =cv=). And finally, fits the model with =fit(...)= and returns a classifier (=clf=), train indices (=train_idx=), sorted test indices (=test_idx=), and scores.
 
-** =train(subject, runs, config, fit, verbose)=
+** =train(subject, runs, config, fit, *, verbose)=
 
 Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with necessary for predicting data. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
+
+* [[file:~/personal/projects/42/total_perspective_vortex/src/predict.py][predict.py]]
+
+** =score_stream(clf, X, y, test_idx)=
+
+Enteres a while loop of test indices. Measures start time, stores predicted class for =X[i]= to =preds=, measures end time, and stores time delta in =latencies=. Prepares and compares predictions versus truths, calculates the mean. =if verbose= (for =predict= mode) prints subject's oulined CLI table. Returns accuracy.
+
+** =predict(subject, runs, *, verbose)=
+
+Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset. Checks model loaded indices lenght matches dataset loaded truth length. Runs =score_stream= and returns accuracy.

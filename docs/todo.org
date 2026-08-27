@@ -43,3 +43,5 @@
 - [ ] Check the necessity of fit, subject, runs, cv_scores in joblib.
 
 - [ ] Check the necessity of returning =float(scores.mean())= in =train(...)=.
+
+- [ ] Go through each doctring and remove the unnecessary (perhaps with llm assistance)

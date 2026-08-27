@@ -165,6 +165,7 @@ def train(
         runs: list[int],
         config: PreprocConfig = DEFAULT,
         fit: FitConfig = FIT_DEFAULT,
+        *,
         verbose: bool = True
 ) -> float:
     """

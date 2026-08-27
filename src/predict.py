@@ -57,7 +57,8 @@ def score_stream(
     for i in test_idx:
         t0 = time.perf_counter()
         preds.append(int(clf.predict(X[i:i+1])[0]))
-        latencies.append(time.perf_counter() - t0)
+        t1 = time.perf_counter()
+        latencies.append(t1 - t0)
     preds = np.asarray(preds)
     truth = y[test_idx]
     acc = float((preds == truth).mean())
@@ -123,4 +124,6 @@ def predict(
             f"test_idx no longer addresses the same epochs"
         )
 
-    return score_stream(d["pipeline"], X, y, d["test_idx"], verbose=verbose)
+    acc = score_stream(d["pipeline"], X, y, d["test_idx"], verbose=verbose)
+
+    return acc
