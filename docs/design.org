@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 14:52>
+#+lastmod: <2026-08-27 16:12>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -189,8 +189,14 @@ Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on
 
 * [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]]
 
+Brings everything together and outputs — this is what discharges the 60% requirement. Unlike =train= -> =predict=, goes through =fit_pipeline= -> =score_stream=, dodging the disk round trip.
+
 ** =evaluate(subject, runs, config, fit)=
 
-Loads epochs and labels under given config. Fits pipeline with =cross_validate=False= and runs score stream (without saving a model). Gets and returns =acc=.
+Loads epochs and labels under given config. Fits pipeline with =cross_validate=False= (the sweep reports held-out accuracy only) and runs score stream with =verbose=False= (without saving a model). Gets and returns =acc=.
 
 ** =run_full_sweep()=
+
+Goes through each experiment, always on defaults. For each experiment calculates accuracy of each subject, prints it out. Calculates the mean accuracy per experiment, prints it as well. Calculates mean accuracy across experiments, prints it as well.
+
+Each cell is wrapped in =try/except=, so one bad subject cannot kill the run; failures are printed at the end and the experiment mean is taken over successful cells only, hence the =n== in the output. Returns the per-experiment means as a list.
