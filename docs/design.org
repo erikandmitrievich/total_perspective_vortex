@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 12:17>
+#+lastmod: <2026-08-27 12:55>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -157,10 +157,13 @@ Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, 
 
 * [[file:~/personal/projects/42/total_perspective_vortex/src/predict.py][predict.py]]
 
-** =score_stream(clf, X, y, test_idx)=
+Where a persisted model meets its held-out partition.
 
-Enteres a while loop of test indices. Measures start time, stores predicted class for =X[i]= to =preds=, measures end time, and stores time delta in =latencies=. Prepares and compares predictions versus truths, calculates the mean. =if verbose= (for =predict= mode) prints subject's oulined CLI table. Returns accuracy.
+** =score_stream(clf, X, y, test_idx, *, verbose)=
+
+Enters a for loop of test indices. Measures start time, stores predicted class for =X[i]= to =preds=, measures end time, and stores time delta in =latencies= per chunk (implemented to comply subject's requirements of <2s latency per chunk). Prepares and compares predictions versus truths, calculates the mean. =if verbose= (for =predict= mode) prints subject's outlined CLI table. Returns accuracy.
 
 ** =predict(subject, runs, *, verbose)=
 
-Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset. Checks model loaded indices lenght matches dataset loaded truth length. Runs =score_stream= and returns accuracy.
+Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset (reloads unders persisted from model config). Checks model loaded indices length matches dataset loaded truth length (prevents different epochs comparison). Runs =score_stream= and returns accuracy.
+
