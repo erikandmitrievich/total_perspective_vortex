@@ -111,9 +111,11 @@ def make_pipeline(
 def fit_pipeline(
         X: npt.NDArray[np.float64],
         y: npt.NDArray[np.int_],
-        fit: FitConfig = FIT_DEFAULT
+        fit: FitConfig = FIT_DEFAULT,
+        *,
+        cross_validate: bool = True
 ) -> tuple[Pipeline, npt.NDArray[np.intp],
-           npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+           npt.NDArray[np.intp], npt.NDArray[np.float64] | None]:
     """
     Cross-validate and fit the pipeline on a stratified training partition.
 
@@ -126,6 +128,12 @@ def fit_pipeline(
     therefore validation scores, and ``test_idx`` is untouched by anything
     here.
 
+    Cross-validation is side-effect free with respect to everything else
+    returned: ``cross_val_score`` clones the pipeline, and the holdout is
+    drawn before it runs. Skipping it therefore leaves ``clf``,
+    ``train_idx`` and ``test_idx`` bit-identical — which is what makes the
+    sweep's accuracies unchanged by ``cross_validate=False``.
+
     Parameters
     ----------
     X : ndarray, shape (n_epochs, n_channels, n_times)
@@ -134,6 +142,10 @@ def fit_pipeline(
         Labels in {0, 1}, row-aligned with ``X``.
     fit : FitConfig
         Component count, split fractions, resample count and seed.
+    cross_validate : bool, default=True
+        Run ``cross_val_score`` on the training partition. The sweep sets
+        this false: it reports held-out accuracy only, so the ten CV fits
+        are work whose result is discarded.
 
     Returns
     -------
@@ -144,8 +156,9 @@ def fit_pipeline(
     test_idx : ndarray of intp
         Held-out rows, sorted ascending so ``score_stream`` replays them in
         recording order rather than shuffle order.
-    scores : ndarray of float, shape (n_splits,)
-        Per-fold validation accuracies.
+    scores : ndarray of float, shape (n_splits,), or None
+        Per-fold validation accuracies; ``None`` when ``cross_validate``
+        is false.
     """
     idx = np.arange(len(y))
     train_idx, test_idx = train_test_split(
@@ -153,9 +166,14 @@ def fit_pipeline(
     )
 
     clf = make_pipeline(fit.n_components)
-    cv = StratifiedShuffleSplit(fit.n_splits, test_size=fit.test_size,
-                                random_state=fit.seed)
-    scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=cv)
+
+    scores = None
+    if cross_validate:
+        splitter = StratifiedShuffleSplit(fit.n_splits,
+                                          test_size=fit.test_size,
+                                          random_state=fit.seed)
+        scores = cross_val_score(clf, X[train_idx], y[train_idx], cv=splitter)
+
     clf.fit(X[train_idx], y[train_idx])
     return clf, train_idx, np.sort(test_idx), scores
 

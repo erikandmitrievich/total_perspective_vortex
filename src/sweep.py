@@ -45,8 +45,9 @@ def evaluate(
         Held-out accuracy for this cell.
     """
     X, y, _ = load_dataset(subject, runs, config)
-    clf, _, test_idx, scores = fit_pipeline(X, y, fit)
-    return score_stream(clf, X, y, test_idx, verbose=False)
+    clf, _, test_idx, _ = fit_pipeline(X, y, fit, cross_validate=False)
+    acc = score_stream(clf, X, y, test_idx, verbose=False)
+    return acc
 
 
 def run_full_sweep() -> list[float]:
@@ -71,7 +72,8 @@ def run_full_sweep() -> list[float]:
                 acc = evaluate(subject, runs)
             except Exception as e:
                 failures.append((exp, subject, repr(e)))
-                print(f"experiment {exp}: subject {subject:03d}: FAILED ({e!r})")
+                print(f"experiment {exp}: subject {subject:03d}: "
+                      f"FAILED ({e!r})")
                 continue
             accs.append(acc)
             print(f"experiment {exp}: subject {subject:03d}: "
