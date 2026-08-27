@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 13:22>
+#+lastmod: <2026-08-27 14:52>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -141,15 +141,15 @@ Uses global =MODELS_DIR= to construct a path to a fitted model. Used in writing 
 
 Just returns the =Pipeline= object. Exists for convenience.
 
-** =fit_pipeline(X, y, fit)=
+** =fit_pipeline(X, y, fit, *, cross_validate)=
 
-=idx= represent array of indices (of labels). =train_split(...)= performs split of indices based on given arguments into train and test.
+=idx= represent array of indices (of labels). =train_test_split(...)= performs split of indices based on given arguments into train and test.
 
 - =test_size= for training and test ratio
 - =stratify= for keeping the original class ratio
 - =random_state= for random state
 
-Then makes a pipeline along with cross-validation object (=cv=). =scores= then stores accuracy of each fold (for =cv=). And finally, fits the model with =fit(...)= and returns a classifier (=clf=), train indices (=train_idx=), sorted test indices (=test_idx=), and scores.
+Then makes a pipeline. If =cross_validate= is set, makes a cross-validation object (=cv=) and stores accuracy of each fold in =scores=; otherwise =scores= is =None=. And finally, fits the model with =fit(...)= and returns a classifier (=clf=), train indices (=train_idx=), sorted test indices (=test_idx=), and scores.
 
 ** =train(subject, runs, config, fit, *, verbose)=
 
@@ -186,3 +186,11 @@ Merely a range of subjects. Exists for coherence: both CLIs validate against it,
 ** =runs_for(run)=
 
 Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] (=train=, =predict=) and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
+
+* [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]]
+
+** =evaluate(subject, runs, config, fit)=
+
+Loads epochs and labels under given config. Fits pipeline with =cross_validate=False= and runs score stream (without saving a model). Gets and returns =acc=.
+
+** =run_full_sweep()=
