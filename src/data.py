@@ -36,7 +36,9 @@ class PreprocConfig:
         Epoch bounds in seconds relative to event onset. ``tmax=2.0``
         keeps the window short enough to fit inside every trial; a longer
         window makes epochs adjacent to a run boundary overrun it, and MNE
-        drops them without raising.
+        drops them without raising. ``tmin=-1.0`` yields no features
+        (cropping and ``baseline=None`` discard it) but drops events within
+        1 s of the recording start.
     crop_tmin, crop_tmax : float or None
         Feature window inside the epoch. ``crop_tmin=None`` disables cropping.
     montage : str

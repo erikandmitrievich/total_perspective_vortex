@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 17:00>
+#+lastmod: <2026-08-27 17:29>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -171,7 +171,7 @@ Then makes a pipeline. If =cross_validate= is set, makes a cross-validation obje
 
 ** =train(subject, runs, config, fit, *, verbose)=
 
-Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with necessary for predicting data. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
+Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with the payload; =predict= reads only =pipeline=, =config=, =test_idx= and =len(train_idx)=, the rest is provenance. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
 
 * [[file:~/personal/projects/42/total_perspective_vortex/src/predict.py][predict.py]]
 
