@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 18:02>
+#+lastmod: <2026-08-27 18:13>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -13,38 +13,77 @@ Deferred until the per-module descriptions are complete.
 * Builtins
 
 ** argparse
+
+Builds the CLI of =mybci.py=: flags, constraints, and the usage errors raised after the =SUBJECTS= and =runs_for= checks.
+
 ** sys
+
+Feeds =sys.argv[1:]= into =main()= and carries its return value out as the process exit status.
+
 ** time
+
+Brackets each per-chunk prediction in =score_stream=, which is what makes the <2 s latency claim measurable rather than asserted.
+
 ** dataclasses
-- dataclass
+
+Parameter records, so defaults live in one declaration instead of scattered call sites.
+
+- =dataclass=: Declares =PreprocConfig= and =FitConfig=, both of which carry values only, no behaviour.
+
 ** pathlib
-- Path
+
+Every filesystem location in the project is a =Path=, never a string.
+
+- =Path=: Builds =MODELS_DIR= and the per-group model file in =model_path=. Also the =path= threaded into =load_raw= and the existence check in =predict=.
 
 * Externals
 
 ** mne
-- Epochs
-- pick_types
-- channels.make_standard_montage
-- datasets.eegbci
-- io.concatenate_raws
-- io.read_raw_edf
+
+The EEG layer. Everything in [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]] that is not arithmetic comes from here.
+
+- =Epochs=: Cuts =filtered= into the =tmin=/=tmax= window around each event in =make_epochs=, and is the object =load_dataset= hands back for figures.
+- =pick_types=: Restricts to EEG channels before epoching, dropping everything the montage does not describe.
+- =channels.make_standard_montage=: Attaches the electrode positions named by =PreprocConfig.montage=; without it =patterns_= cannot be plotted as a topomap.
+- =datasets.eegbci=: Resolves subject and run numbers to local EDF paths, fetching on first use, and standardises channel names.
+- =io.read_raw_edf=: Reads one run file into a =Raw=.
+- =io.concatenate_raws=: Joins the three runs of a group into a single =Raw=. Legitimate only because T1 and T2 keep one meaning across the group (see =BASE_GROUPS=).
+
 ** numpy
-- typing
+
+Array backend throughout; the covariance reshape and the pseudo-inverse in [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]] are plain numpy.
+
+- =typing=: =NDArray= annotations on the arrays that cross module boundaries — =X=, =y=, features.
+
 ** scipy
-- linalg.eigh
+
+Used for exactly one call, but that call is the algorithm.
+
+- =linalg.eigh=: Solves the generalised problem =eigh(S_0, S_0 + S_1)= in =MyCSP.fit=, returning the joint diagonaliser as eigenvectors.
+
 ** sklearn
-- base.BaseEstimator
-- base.TransformerMixin
-- discriminant_analysis.LinearDiscriminantAnalysis
-- model_selection.StratifiedShuffleSplit
-- model_selection.cross_val_score
-- model_selection.train_test_split
-- pipeline.Pipeline
-- utils.validation.check_is_fitted
+
+Supplies the estimator contract =MyCSP= implements, the classifier behind it, and the splitting machinery.
+
+- =base.BaseEstimator=: Gives =MyCSP= =get_params=/=set_params=; cross-validation clones estimators through these, so without it =cross_val_score= cannot re-instantiate the step.
+- =base.TransformerMixin=: Supplies =fit_transform=, which is what =Pipeline= calls on intermediate steps.
+- =discriminant_analysis.LinearDiscriminantAnalysis=: Terminal step of the pipeline. Being linear is precisely why the log transform in =MyCSP.transform= earns its place.
+- =model_selection.StratifiedShuffleSplit=: The =cv= object in =fit_pipeline= — =n_splits= draws at =test_size=, class ratio preserved in each.
+- =model_selection.cross_val_score=: Produces =scores=, the per-fold accuracies reported by =train=.
+- =model_selection.train_test_split=: Splits =idx= into =train_idx= and =test_idx= under =stratify=; =test_idx= is the partition =predict= later replays.
+- =pipeline.Pipeline=: Binds =MyCSP= to LDA so the spatial filters are fit on training folds only. This is the whole leakage guarantee.
+- =utils.validation.check_is_fitted=: Guards =MyCSP.transform= against being called before =fit=.
+
 ** joblib
+
+Serialises the fitted pipeline and its provenance to =model_path(...)= in =train=, and reads it back in =predict=. The only disk round trip in the project, and the reason =sweep= bypasses both.
+
 ** matplotlib
-- pyplot
+
+Imported by [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]] only; nothing on the training path touches it.
+
+- =pyplot=: Draws the before/after PSD panels, fed by =load_raw= (unfiltered) and =preprocess= (filtered).
+
 * [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
 
 Defines run groups. Imported by [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]], [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
