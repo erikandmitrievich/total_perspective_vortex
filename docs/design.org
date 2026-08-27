@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-27 12:55>
+#+lastmod: <2026-08-27 13:11>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -167,3 +167,23 @@ Enters a for loop of test indices. Measures start time, stores predicted class f
 
 Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset (reloads unders persisted from model config). Checks model loaded indices length matches dataset loaded truth length (prevents different epochs comparison). Runs =score_stream= and returns accuracy.
 
+
+* [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
+
+A place that defines experiments of [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]].
+
+** =BASE_GROUPS=
+
+Defines the base groups of raw EEG data: tells which records belong to which group.
+
+** =EXPERIMENTS=
+
+Defines experiments for =run_full_sweep()=. Just adds additional two experiments, on top of case groups.
+
+** =SUBJECTS=
+
+Merely a range of subjects. Exists for coherence.
+
+** =runs_for(run)=
+
+Expands =run= to =runs=. When in =predict= -> =train= pipeline, converts =run = 3= to =runs = [3, 7, 11]=. Non-explicit requirement from the [[file:subject.org][subject.org]]. In case not found, raises an error.
