@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-07-16>
-#+lastmod: <2026-08-26 18:53>
+#+lastmod: <2026-08-28 08:41>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -103,8 +103,6 @@ is the map $A = I - \tfrac1C\mathbf{1}\mathbf{1}^{\top}$: a projector of rank $C
 
 So CAR costs a dimension and buys nothing CSP can use. It is not applied.
 
-*Caveat.* The invariance argument holds for the unregularised estimator. Shrinkage towards $I$ is basis-dependent — $A(\,(1-\rho)\Sigma + \rho\tau I\,)A^{\top} \neq (1-\rho)A\Sigma A^{\top} + \rho\tau' I$ in general — so with =reg= set, the choice of reference stops being neutral.
-
 ** Definitions
 
 - Epoch :: a time interval of one EEG activity (equivalently: one trial).
@@ -147,7 +145,9 @@ So CAR costs a dimension and buys nothing CSP can use. It is not applied.
 
 - $\mu$ :: eigenvalue of the pencil $(\Sigma^{(+)}, \Sigma)$
 
-*Convention warning.* The subject writes $W^{\top}X = X_{CSP}$, so $W$ has filters in its *columns* and this document follows that. Both MNE and my code store =filters_= $= W^{\top}$, i.e. filters in *rows*. Every shape assertion in the test harness is against the row convention.
+*Convention warning.* The spec writes $W^{\top}X = X_{CSP}$, so $W$ has filters in its *columns* and this document follows that. Both MNE and my code store =filters_= $= W^{\top}$, i.e. filters in *rows*.
+
+In code: $\Sigma^{(+ )}$ is =S_0=, $\Sigma^{(-)}$ is =S_1=, $\Sigma$ is =S_0 + S_1=, and $(+)$ is =classes_[0]= — the smaller of the two labels. Descending $\mu$ therefore puts =classes_[0]=-dominant filters in the leading rows of =filters_=.
 
 * Objective
 
@@ -160,7 +160,7 @@ J(w) = \frac{w^{\top}\Sigma^{(+)}w}{w^{\top}\Sigma^{(-)}w}
 
 The numerator is the class-$(+)$ variance of the projected signal, the denominator the class-$(-)$ variance (see [[*Variance of a projection][Variance of a projection]]). $J$ is *scale invariant*: $J(\alpha w) = J(w)$ for $\alpha \neq 0$, so a filter is only ever determined up to a non-zero scalar. Maximising $J$ gives the most $( +)$ -dominant filter; minimising it gives the most $(-)$ -dominant one.
 
-** DONE Bridge lemma :: stationarity $\Rightarrow$ generalised eigenproblem
+** Bridge lemma :: stationarity $\Rightarrow$ generalised eigenproblem
 
 The step the rest of the document depends on, and the one I derive myself:
 
@@ -176,8 +176,8 @@ $$\Sigma^{(+)}w = \lambda\,\Sigma^{(-)}w \text{ with } \lambda = J(w)$$
 J(w) &= \dfrac{w^{\top}\Sigma^{(+ )}w}{w^{\top}\Sigma^{(-)}w} \\
 J(w) &= \dfrac{u}{v} \qquad \left( u = w^{\top}\Sigma^{(+)}w,\ v = w^{\top}\Sigma^{(-)}w \right) \\
 \nabla J(w) &= \dfrac{\nabla u v - u \nabla v}{v^{2}} \\
-\nabla u &= \Sigma^{(+)} w \\
-\nabla v &= \Sigma^{(-)} w \\
+\nabla u &= 2\,\Sigma^{(+)} w \\
+\nabla v &= 2\,\Sigma^{(-)} w \\
 \nabla J(w) &= \dfrac{(\Sigma^{(+ )} w) (w^{\top}\Sigma^{(-)}w) - (w^{\top}\Sigma^{(+)}w) (\Sigma^{(-)} w)}{(w^{\top}\Sigma^{(-)}w)^{2}} \\
 \end{align*}
 
@@ -199,7 +199,7 @@ J(w) &= \dfrac{u}{v} \qquad \left( u = w^{\top}\Sigma^{(+)}w,\ v = w^{\top}\Sigm
 
 $\Sigma^{(c)}$ is written below as an uncentred second moment $\frac{1}{n-1}ZZ^{\top}$ rather than a centred covariance $\frac{1}{n-1}(Z-\bar{z})(Z-\bar{z})^{\top}$. This is legitimate *because* the signal was band-pass filtered to $[7, 30]$ Hz beforehand: the filter has no DC gain, so $\bar{z} \approx 0$ per channel and the two estimators coincide to within the filter's stopband attenuation. The preprocessing choice and the estimator choice are therefore coupled — dropping the high-pass would invalidate this.
 
-** Concatenation estimator (=cov_est='concat'=)
+** Concatenation estimator
 
 Concatenate all class-$c$ epochs along the time axis:
 
@@ -224,7 +224,9 @@ return Z @ Z.T / (Z.shape[1] - 1)                  # Sigma^(c)
 
 The transpose reorders $(N_c, C, T) \to (C, N_c, T)$ and the reshape flattens the last two axes in C-order, which is exactly the horizontal concatenation of eq. [[eq:concat]].
 
-** Relation to the per-epoch estimator (=cov_est='epoch'=)
+This is the only estimator =MyCSP= implements. MNE exposes both under its =cov_est= parameter and defaults to this one.
+
+** Relation to the per-epoch estimator
 
 Since $Z_cZ_c^{\top} = \sum_{i \in \mathcal{J}_c} X_iX_i^{\top}$, the two common estimators differ *only by a positive scalar*:
 
@@ -244,13 +246,13 @@ so $\Sigma^{(c)}_{\text{concat}} = \kappa_c \, \Sigma^{(c)}_{\text{epoch}}$ with
 
 A *common* positive scalar on both classes cancels in eq. [[eq:objective]] entirely, so the estimators would be equivalent if $\kappa_+ = \kappa_-$. They are not: $\kappa_c$ depends on $N_c$, and
 
-$$\kappa_+ - \kappa_- \;\approx\; \frac{1}{T}\left(\frac{1}{N_-} - \frac{1}{N_+}\right)$$
+$$\kappa_+ - \kappa_- \;\approx\; \frac{1}{T}\left(\frac{1}{N_+} - \frac{1}{N_-}\right)$$
 
 which is non-zero under class imbalance. At $N_+ = 22$, $N_- = 23$, $T = 161$ this is $1.2 \times 10^{-5}$ relative, and it displaces the spectrum by
 
 $$\max_k \big|\mu_k^{\text{concat}} - \mu_k^{\text{epoch}}\big| = 3.07 \times 10^{-6}$$
 
-measured. That is *above* the harness's =EVAL_ATOL = 1e-6=. So the two estimators are interchangeable for classification but not for bit-level parity with MNE: the estimator choice must match =cov_est=, and =cov_est='concat'= is the MNE default. The estimators diverge further under regularisation, which is applied once per class in one case and once per epoch in the other.
+measured. That is six orders of magnitude below any scale classification responds to, so the two estimators are interchangeable in practice; the concatenation form is used because it is the one derived above.
 
 * The pencil
 
@@ -371,16 +373,22 @@ $L^{-1}$ is a whitening transform for $\Sigma$; the ordinary symmetric eigenprob
 
 The ascending order is a silent trap: reversing the spectrum yields $\mu \mapsto 1-\mu$, which still looks like a valid CSP spectrum.
 
-*Verification target:* solved this way, eq. [[eq:pencil-norm]] reproduces MNE's spectrum to $\sim 10^{-13}$.
-
 * Component selection and ordering
 
-Order the eigenpairs by $\mu$ descending, $\mu_1 \ge \cdots \ge \mu_r$. Two selection rules for $n_{\text{comp}}$ filters:
+Order the eigenpairs by $\mu$ descending, $\mu_1 \ge \cdots \ge \mu_C$. Two selection rules for $n_{\text{comp}}$ filters:
 
-- *Symmetric extremes* (mine): take $m = \lfloor n_{\text{comp}}/2 \rfloor$ from each end, indices $\{1,\dots,m\} \cup \{r-m+1,\dots,r\}$.
+- *Symmetric extremes* (mine): take $m = \lfloor n_{\text{comp}}/2 \rfloor$ from each end, indices $\{1,\dots,m\} \cup \{C-m+1,\dots,C\}$.
 - *Mutual information* (MNE, two-class case): take the $n_{\text{comp}}$ largest values of $|\mu_k - \tfrac12|$.
 
 Both target maximally class-imbalanced filters. They coincide when the spectrum is symmetric about $\tfrac12$ and can differ otherwise, since the second rule may return an unbalanced split (e.g. three high, one low).
+
+=MyCSP.fit= rejects odd $n_{\text{comp}}$, so the floor is never taken.
+
+* Filters and patterns
+
+$W$ is the analysis operator: $s = W^{\top}X_i$ extracts sources. Its inverse is the synthesis operator $A = W^{-\top}$, with $X_i = As$ — column $k$ of $A$ is how source $k$ appears at the scalp. Filters are tuned to suppress everything but their target, so a filter's weights carry the shape of the interference, not of the source, and a topomap of $W$ is not interpretable as a cortical map. $A$ is.
+
+In code =patterns_= holds $A^{\top}$: =np.linalg.pinv(eigvecs[:, order])= is $W^{-1}$, whose rows are the columns of $A$. Rows are patterns, matching the row convention of =filters_=.
 
 * Feature extraction
 
@@ -421,12 +429,12 @@ features = np.log(features)
 
 * Identifiability
 
-Three symmetries of the solution, each of which the verification harness must quotient out before comparing against MNE:
+Three symmetries of the solution. Any comparison of these filters against another implementation's must quotient out all three first:
 
 1. *Scale.* $J$ and $\mu$ are invariant under $w \mapsto \alpha w$. Different solvers impose different normalisations (=eig= returns $\lVert w \rVert_2 = 1$; =eigh= returns $W^{\top}\Sigma W = I$). Compare unit-normalised rows.
 2. *Sign.* $w$ and $-w$ give identical features, since eq. [[eq:power]] is quadratic. Compare $|\cos|$.
 3. *Rotation within a degenerate subspace.* If $\mu$ has multiplicity $>1$, only the *eigenspace* is determined; any orthonormal basis of it is a valid set of filters. Filters with $\mu \approx \tfrac12$ are therefore not individually reproducible, while the extremes ($\mu \to 0, 1$) are well separated and must match tightly.
 
-* Note on the subject's notation
+* Note on the spec's notation
 
-The subject writes the data as $X \in \mathbb{R}^{d \times N}$ with $d = ch \times time$, i.e. each epoch flattened into a single vector of length $C \cdot T$. CSP does *not* operate on that space: the projection acts on the channel axis only ($C$-dimensional), with time treated as the sample axis of the covariance estimate. Under the flattened reading $W$ would be $CT \times CT$ ($\approx 10^{4}$ square) and the covariance would be rank-1 per epoch. The relation $W^{\top}X = X_{CSP}$ is correct only with $X$ read as a single epoch $X_i \in \mathbb{R}^{C \times T}$ and $W \in \mathbb{R}^{C \times C}$.
+The spec writes the data as $X \in \mathbb{R}^{d \times N}$ with $d = ch \times time$, i.e. each epoch flattened into a single vector of length $C \cdot T$. CSP does *not* operate on that space: the projection acts on the channel axis only ($C$-dimensional), with time treated as the sample axis of the covariance estimate. Under the flattened reading $W$ would be $CT \times CT$ ($\approx 10^{4}$ square) and the covariance would be rank-1 per epoch. The relation $W^{\top}X = X_{CSP}$ is correct only with $X$ read as a single epoch $X_i \in \mathbb{R}^{C \times T}$ and $W \in \mathbb{R}^{C \times C}$.
