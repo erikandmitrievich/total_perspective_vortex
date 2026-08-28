@@ -75,20 +75,23 @@ Above the 60% mean the subject requires.
 
 ```
 .
-├── mybci.py                          CLI: sweep / train / predict
-├── visualise.py                      before/after PSD figure
+├── mybci.py                CLI: sweep / train / predict
+├── visualise.py            before/after PSD figure
 ├── requirements.txt
+├── LICENSE
 ├── src/
-│   ├── data.py                       load, filter, epoch
-│   ├── csp.py                        MyCSP - the from-scratch transformer
-│   ├── train.py                      pipeline, cross-validation, fit, persistence
-│   ├── predict.py                    stream replay and scoring
-│   ├── sweep.py                      109 subjects x 6 experiments
-│   └── experiments.py                run groups
+│   ├── data.py             load, filter, epoch
+│   ├── csp.py              MyCSP — the from-scratch transformer
+│   ├── train.py            pipeline, cross-validation, fit, persistence
+│   ├── predict.py          stream replay and scoring
+│   ├── sweep.py            full sweep over subjects × experiments
+│   └── experiments.py      run groups
+├── figs/
+│   └── S001_R3_psd.png     sample output of visualise.py
 └── docs/
-    ├── csp.org                       CSP derivation and verification notes
-    ├── eegmmidb.org                  dataset layout
-    └── total_perspective_vortex.org  the spec
+    ├── subject.org         the spec
+    ├── design.org          module-by-module walkthrough
+    └── csp.org             CSP derivation
 ```
 
 `fit_pipeline` and `score_stream` are pure — arrays in, numbers out. `train`, `predict` and `evaluate` are shells over them.
