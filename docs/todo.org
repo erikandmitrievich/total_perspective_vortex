@@ -62,8 +62,8 @@
 
 - [X] Update dependencies in [[file:~/personal/projects/42/total_perspective_vortex/requirements.txt][requirements.txt]].
 
-- [ ] Write visualisation interpretation.
+- [X] Get visualisation interpretation.
 
 - [ ] Write infrastructure section of [[file:design.org][design.org]].
 
-- [ ] Add visualise module to design.
+- [X] Add visualise module to design.
