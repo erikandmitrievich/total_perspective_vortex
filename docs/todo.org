@@ -53,3 +53,7 @@
 - [X] Assess the need of the tmin and tmax in [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]. As it is made solely for plotting.
 
   Dropped crop_tmin and crop_tmax.
+
+- [ ] Remove [[file:csp.org][csp.org]] mentions tests for [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]].
+
+- [ ] Update readme on project tree.
