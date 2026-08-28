@@ -57,3 +57,7 @@
 - [X] Remove [[file:csp.org][csp.org]] mentions tests for [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]].
 
 - [ ] Update readme on project tree.
+
+- [X] Update dependencies in [[file:~/personal/projects/42/total_perspective_vortex/requirements.txt][requirements.txt]].
+
+- [ ] Write visualisation interpretation.
