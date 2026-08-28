@@ -40,7 +40,7 @@ Every filesystem location in the project is a =Path=, never a string.
 
 ** mne
 
-The EEG layer. Everything in [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]] that is not arithmetic comes from here.
+The EEG layer. Everything in [[file:../src/data.py][data.py]] that is not arithmetic comes from here.
 
 - =Epochs=: Cuts =filtered= into the =tmin=/=tmax= window around each event in =make_epochs=, and is the object =load_dataset= hands back for figures.
 - =pick_types=: Restricts to EEG channels before epoching, dropping everything the montage does not describe.
@@ -51,7 +51,7 @@ The EEG layer. Everything in [[file:~/personal/projects/42/total_perspective_vor
 
 ** numpy
 
-Array backend throughout; the covariance reshape and the pseudo-inverse in [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]] are plain numpy.
+Array backend throughout; the covariance reshape and the pseudo-inverse in [[file:../src/csp.py][csp.py]] are plain numpy.
 
 - =typing=: =NDArray= annotations on the arrays that cross module boundaries — =X=, =y=, features.
 
@@ -80,13 +80,13 @@ Serialises the fitted pipeline and its provenance to =model_path(...)= in =train
 
 ** matplotlib
 
-Imported by [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]] only; nothing on the training path touches it.
+Imported by [[file:../visualise.py][visualise.py]] only; nothing on the training path touches it.
 
 - =pyplot=: Draws the before/after PSD panels, fed by =load_raw= (unfiltered) and =preprocess= (filtered).
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/experiments.py][experiments.py]]
+* [[file:../src/experiments.py][experiments.py]]
 
-Defines run groups. Imported by [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]], [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
+Defines run groups. Imported by [[file:../src/sweep.py][sweep.py]], [[file:../mybci.py][mybci.py]] and [[file:../visualise.py][visualise.py]].
 
 ** =BASE_GROUPS=
 
@@ -102,9 +102,9 @@ Merely a range of subjects. Exists for coherence: both CLIs validate against it,
 
 ** =runs_for(run)=
 
-Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]] (=train=, =predict=) and [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
+Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:../mybci.py][mybci.py]] (=train=, =predict=) and [[file:../visualise.py][visualise.py]].
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/data.py][data.py]]
+* [[file:../src/data.py][data.py]]
 
 Where the data comes from.
 
@@ -147,7 +147,7 @@ Just returns shifted event labels to comply with project notation.
 
 Gets =raw=. Preprocesses and epochs it. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]]
+* [[file:../src/csp.py][csp.py]]
 
 Heart of project. A from scratch implementation of CSP dimensionality reduction algorithm.
 
@@ -175,7 +175,7 @@ Verifies the model is fitted using =check_is_fitted(self)= (which ensures the re
 
 ** TODO why inherits?
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/train.py][train.py]]
+* [[file:../src/train.py][train.py]]
 
 Where training happens.
 
@@ -210,7 +210,7 @@ Then makes a pipeline. If =cross_validate= is set, makes a cross-validation obje
 
 Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with the payload; =predict= reads only =pipeline=, =config=, =test_idx= and =len(train_idx)=, the rest is provenance. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/predict.py][predict.py]]
+* [[file:../src/predict.py][predict.py]]
 
 Where a persisted model meets its held-out partition.
 
@@ -222,7 +222,7 @@ Enters a for loop of test indices. Measures start time, stores predicted class f
 
 Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset (reloads unders persisted from model config). Checks model loaded indices length matches dataset loaded truth length (prevents different epochs comparison). Runs =score_stream= and returns accuracy.
 
-* [[file:~/personal/projects/42/total_perspective_vortex/src/sweep.py][sweep.py]]
+* [[file:../src/sweep.py][sweep.py]]
 
 Brings everything together and outputs — this is what discharges the 60% requirement. Unlike =train= -> =predict=, goes through =fit_pipeline= -> =score_stream=, dodging the disk round trip.
 
@@ -236,7 +236,7 @@ Goes through each experiment, always on defaults. For each experiment calculates
 
 Each cell is wrapped in =try/except=, so one bad subject cannot kill the run; failures are printed at the end and the experiment mean is taken over successful cells only, hence the =n== in the output. Returns the per-experiment means as a list.
 
-* [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]]
+* [[file:../mybci.py][mybci.py]]
 
 An entrypoint of the project.
 
