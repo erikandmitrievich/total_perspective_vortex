@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-07-16>
-#+lastmod: <2026-08-28 08:41>
+#+lastmod: <2026-08-28 11:32>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -383,12 +383,6 @@ Order the eigenpairs by $\mu$ descending, $\mu_1 \ge \cdots \ge \mu_C$. Two sele
 Both target maximally class-imbalanced filters. They coincide when the spectrum is symmetric about $\tfrac12$ and can differ otherwise, since the second rule may return an unbalanced split (e.g. three high, one low).
 
 =MyCSP.fit= rejects odd $n_{\text{comp}}$, so the floor is never taken.
-
-* Filters and patterns
-
-$W$ is the analysis operator: $s = W^{\top}X_i$ extracts sources. Its inverse is the synthesis operator $A = W^{-\top}$, with $X_i = As$ — column $k$ of $A$ is how source $k$ appears at the scalp. Filters are tuned to suppress everything but their target, so a filter's weights carry the shape of the interference, not of the source, and a topomap of $W$ is not interpretable as a cortical map. $A$ is.
-
-In code =patterns_= holds $A^{\top}$: =np.linalg.pinv(eigvecs[:, order])= is $W^{-1}$, whose rows are the columns of $A$. Rows are patterns, matching the row convention of =filters_=.
 
 * Feature extraction
 

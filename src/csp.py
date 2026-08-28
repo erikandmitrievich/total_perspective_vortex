@@ -39,7 +39,7 @@ class MyCSP(BaseEstimator, TransformerMixin):
         The two class labels, sorted ascending. Leading filters maximise
         variance for ``classes_[0]``.
     patterns_ : ndarray, shape (n_channels, n_channels)
-        Spatial patterns as rows. Plot these, not the filters, as topomaps.
+        Spatial patterns as rows. Not used.
     """
 
     def __init__(self,

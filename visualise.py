@@ -14,6 +14,7 @@ import mne
 from src.data import DEFAULT, PreprocConfig, load_raw, preprocess
 from src.experiments import runs_for
 
+
 ROOT = Path(__file__).resolve().parent
 FIG_DIR = ROOT / "figs"
 
@@ -107,8 +108,7 @@ def plot_psd_comparison(
     panels = (
         (axes[0], raw, "Raw"),
         (axes[1], filtered,
-         f"Band-pass {config.l_freq:g}-{config.h_freq:g} Hz "
-         f"({config.fir_design})"),
+         f"Band-pass {config.l_freq:g}-{config.h_freq:g} Hz"),
     )
 
     for ax, data, title in panels:
@@ -123,7 +123,6 @@ def plot_psd_comparison(
         ax.set_ylim(lo, hi)
 
     fig.suptitle("Power spectral density, before and after preprocessing")
-    fig.tight_layout()
     return fig
 
 
