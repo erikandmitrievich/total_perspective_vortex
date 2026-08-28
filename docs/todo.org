@@ -54,6 +54,6 @@
 
   Dropped crop_tmin and crop_tmax.
 
-- [ ] Remove [[file:csp.org][csp.org]] mentions tests for [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]].
+- [X] Remove [[file:csp.org][csp.org]] mentions tests for [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]].
 
 - [ ] Update readme on project tree.
