@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-28 13:21>
+#+lastmod: <2026-08-28 14:12>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -18,7 +18,7 @@ Builds the CLI of =mybci.py=: flags, constraints, and the usage errors raised af
 
 ** sys
 
-Feeds =sys.argv[1:]= into =main()= and carries its return value out as the process exit status.
+Feeds =sys.argv[1:]= into =main()=.
 
 ** time
 
@@ -172,8 +172,6 @@ Summing up, it calculates filter matrix which will be used to reduce dimensional
 *** =transform(X)=
 
 Verifies the model is fitted using =check_is_fitted(self)= (which ensures the required learned attributes exist). Selects the leftmost and rightmost filters, as they produce the most discriminative variance between the two classes. Projects the raw data onto these selected filters (resulting in =X_prj=). Calculates the =features= array of shape =(n_epochs, n_components)=, where each value essentially represents the energy (variance) of the filtered brain activity for one component of one epoch. Finally, if =self.log= is set to =True=, a log transformation is applied to the features to compress extreme spikes and create a normal (bell-curve) distribution, which is much easier for linear classifiers to process. Returns features.
-
-** TODO why inherits?
 
 * [[file:../src/train.py][train.py]]
 
