@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-29>
-#+lastmod: <2026-08-29 12:02>
+#+lastmod: <2026-08-29 12:04>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -11,11 +11,11 @@
 
 - [X] Use fix hardcoded 109 in [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
 
-- [ ] Remove =MyCSP.patterns_=.
+- [X] Remove =MyCSP.patterns_=.
 
-  - [ ] Remove the code part.
+  - [X] Remove the code part.
 
-  - [ ] Remove the doc part.
+  - [X] Remove the doc part.
 
 - [ ] Finish infrastructure of [[file:design.org][design.org]].
 

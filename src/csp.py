@@ -38,8 +38,6 @@ class MyCSP(BaseEstimator, TransformerMixin):
     classes_ : ndarray, shape (2,)
         The two class labels, sorted ascending. Leading filters maximise
         variance for ``classes_[0]``.
-    patterns_ : ndarray, shape (n_channels, n_channels)
-        Spatial patterns as rows. Not used.
     """
 
     def __init__(self,
@@ -120,7 +118,6 @@ class MyCSP(BaseEstimator, TransformerMixin):
         order = np.argsort(eigvals)[::-1]
         self.eigvals_ = eigvals[order]
         self.filters_ = eigvecs[:, order].T
-        self.patterns_ = np.linalg.pinv(eigvecs[:, order])
         return self
 
     def transform(self,

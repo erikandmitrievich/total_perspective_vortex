@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-29 10:48>
+#+lastmod: <2026-08-29 12:04>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -165,7 +165,7 @@ Gets the number of channels (=n_channels=). Reshapes the 3D tensor from =(epochs
 
 *** =fit(X, y)=
 
-Validates =n_components= is even and =classes= count being exactly 2. Assigns =self.classes_=, and calculates covariance matrices for different classes (=S_0=, =S_1=). Calls =eigh(S_0, S_0 + S_1)= and obtains eigenvalues and eigenvectors: =eigvals=, =eigvecs= (see "Why =eigh= is the right solver" from [[file:csp.org][csp.org]]). Stores descendingly ordered eigenvalues and eigenvectors in =self.eigvals_= and =self.filters_= (=self.filters_= holds the eigenvectors as rows; see "Convention warning" from [[file:csp.org][csp.org]]). In parallel, stores pseudo-inverse of spatial filters in =self.patterns_= — what a topomap should display; nothing consumes it yet.
+Validates =n_components= is even and =classes= count being exactly 2. Assigns =self.classes_=, and calculates covariance matrices for different classes (=S_0=, =S_1=). Calls =eigh(S_0, S_0 + S_1)= and obtains eigenvalues and eigenvectors: =eigvals=, =eigvecs= (see "Why =eigh= is the right solver" from [[file:csp.org][csp.org]]). Stores descendingly ordered eigenvalues and eigenvectors in =self.eigvals_= and =self.filters_= (=self.filters_= holds the eigenvectors as rows; see "Convention warning" from [[file:csp.org][csp.org]]).
 
 Summing up, it calculates filter matrix which will be used to reduce dimensionality of raw epoch data. It's the main function of CSP.
 
