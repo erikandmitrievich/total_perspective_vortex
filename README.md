@@ -13,7 +13,7 @@ Given a subject's 64-channel recording, decide which of two movements they perfo
 5. **Classify** — linear discriminant analysis.
 6. **Replay** — held-out epochs predicted one at a time, measuring per-chunk latency against the 2 s bound.
 
-CSP is implemented from scratch in `src/csp.py`; its derivation is in [`docs/csp.org`](docs/csp.org).
+CSP is implemented from scratch in `src/csp.py`; its derivation is in [`docs/csp.org`](docs/csp.org). `test_csp.py` checks its features against `mne.decoding.CSP` on one subject.
 
 ## Install
 
@@ -38,6 +38,9 @@ python mybci.py 4 14 predict
 
 # PSD before and after preprocessing
 python visualise.py 1 6
+
+# check MyCSP against mne.decoding.CSP
+python test_csp.py
 ```
 
 `train` and `predict` take a run number and expand it to its group; a single run is not a self-contained binary problem. The model is written to `models/S{subject}_R{runs}.joblib` with the preprocessing config and held-out indices, so `predict` scores the same partition under the same pipeline.
@@ -77,6 +80,7 @@ Above the 60% mean the spec requires, at every seed tried. The last row's min an
 .
 ├── mybci.py                CLI: sweep / train / predict
 ├── visualise.py            before/after PSD figure
+├── test_csp.py             MyCSP against mne.decoding.CSP
 ├── requirements.txt
 ├── LICENSE
 ├── src/
