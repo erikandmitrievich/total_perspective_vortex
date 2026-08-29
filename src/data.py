@@ -95,7 +95,7 @@ def load_raw(
     raw : mne.io.BaseRaw
         Concatenated, preloaded recording.
     """
-    raw_fnames = eegbci.load_data(subject, runs, path=path)
+    raw_fnames = eegbci.load_data(subject, runs, path=path, update_path=False)
     raw = concatenate_raws([read_raw_edf(f, preload=True) for f in raw_fnames])
     return raw
 

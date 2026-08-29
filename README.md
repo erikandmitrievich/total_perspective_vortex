@@ -22,7 +22,16 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-The dataset downloads on first use into MNE's cache; it is not vendored.
+## Dataset
+
+`eegbci.load_data` downloads to `~/mne_data` on first run, fetching 1526 files sequentially from a rate-limited server — hours for all 109 subjects. PhysioNet's S3 mirror does the same in ~3 minutes:
+
+```sh
+pip install awscli
+export MNE_DATASETS_EEGBCI_PATH=~/mne_data
+aws s3 sync --no-sign-request s3://physionet-open/eegmmidb/1.0.0/ \
+  $MNE_DATASETS_EEGBCI_PATH/MNE-eegbci-data/files/eegmmidb/1.0.0/
+```
 
 ## Usage
 
