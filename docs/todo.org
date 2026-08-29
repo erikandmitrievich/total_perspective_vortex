@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-29>
-#+lastmod: <2026-08-29 15:08>
+#+lastmod: <2026-08-29 15:11>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -59,6 +59,8 @@
 - [X] Research on possibility of using the flashdrive for EEGMMIDB instead of manual downloading through =eegbci.load_data(...)=.
 
   No need, fixed.
+
+- [ ] Check everything on clean cluster pc.
 
 * Cosmetic
 
