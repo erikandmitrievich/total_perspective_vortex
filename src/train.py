@@ -50,7 +50,7 @@ class FitConfig:
     n_components: int = 4
     test_size:    float = 0.2
     n_splits:     int = 10
-    seed:         int = 4
+    seed:         int = 0
 
 
 FIT_DEFAULT = FitConfig()

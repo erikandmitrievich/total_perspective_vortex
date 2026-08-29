@@ -57,19 +57,19 @@ Experiments 4 and 5 pool an executed group with its imagined counterpart: T1/T2 
 
 ## Results
 
-Held-out accuracy, `seed=42`:
+Held-out accuracy, mean over all 109 subjects. `seed 0` is the default (`FitConfig.seed`); the spread is over seeds 0–4.
 
-| Experiment | Accuracy |
-|------------|----------|
-| 0          | 0.5806   |
-| 1          | 0.6147   |
-| 2          | 0.7254   |
-| 3          | 0.6390   |
-| 4          | 0.5599   |
-| 5          | 0.6890   |
-| **mean**   | **0.6348** |
+| # | Task                 | seed 0     | mean       | min        | max        |
+|---|----------------------|------------|------------|------------|------------|
+| 0 | L/R fist, executed   | 0.5766     | 0.5752     | 0.5678     | 0.5794     |
+| 1 | L/R fist, imagined   | 0.5604     | 0.5696     | 0.5604     | 0.5729     |
+| 2 | fists/feet, executed | 0.7229     | 0.7286     | 0.7202     | 0.7363     |
+| 3 | fists/feet, imagined | 0.6373     | 0.6391     | 0.6368     | 0.6425     |
+| 4 | L/R fist, pooled     | 0.5932     | 0.5866     | 0.5816     | 0.5932     |
+| 5 | fists/feet, pooled   | 0.6875     | 0.6879     | 0.6865     | 0.6891     |
+|   | **mean**             | **0.6296** | **0.6312** | **0.6296** | **0.6335** |
 
-Above the 60% mean the subject requires.
+Above the 60% mean the spec requires, at every seed tried. The last row's min and max are over per-seed overall means, not over the columns above them. Raw sweep output in [`results/`](results/).
 
 ## Layout
 
@@ -86,6 +86,8 @@ Above the 60% mean the subject requires.
 │   ├── predict.py          stream replay and scoring
 │   ├── sweep.py            full sweep over subjects × experiments
 │   └── experiments.py      run groups
+├── results/
+│   └── seed_NN.log         full sweep output, one file per seed
 ├── figs/
 │   └── S001_R3_psd.png     sample output of visualise.py
 └── docs/
