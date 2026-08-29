@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-29>
-#+lastmod: <2026-08-29 12:04>
+#+lastmod: <2026-08-29 12:16>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -19,11 +19,29 @@
 
 - [ ] Finish infrastructure of [[file:design.org][design.org]].
 
-- [ ] design.org visualise.py broken absolute links. Make relative and update doom config.
+- [X] design.org visualise.py broken absolute links. Make relative and update doom config.
 
-- [ ] design.org links docs/eegmmidb.org. Remove.
+- [X] design.org links docs/eegmmidb.org. Remove.
 
-- [ ] visualise.py has default =subject=1= and =run=6=, while figs has =S001_R3_psd.png=. Replace with default.
+- [X] visualise.py has default =subject=1= and =run=6=, while figs has =S001_R3_psd.png=. Replace with default.
+
+- [ ] Go through all docstrings.
+
+  - [ ] [[file:../mybci.py][mybci.py]]
+
+  - [ ] [[file:../visualise.py][visualise.py]]
+
+  - [ ] [[file:../src/experiments.py][experiments.py]]
+
+  - [ ] [[file:../src/data.py][data.py]]
+
+  - [ ] [[file:../src/csp.py][csp.py]]
+
+  - [ ] [[file:../src/train.py][train.py]]
+
+  - [ ] [[file:../src/predict.py][predict.py]]
+
+  - [ ] [[file:../src/sweep.py][sweep.py]]
 
 * Code Gaps
 

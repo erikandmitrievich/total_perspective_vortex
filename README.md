@@ -89,7 +89,7 @@ Above the 60% mean the spec requires, at every seed tried. The last row's min an
 ├── results/
 │   └── seed_NN.log         full sweep output, one file per seed
 ├── figs/
-│   └── S001_R3_psd.png     sample output of visualise.py
+│   └── S001_R6_psd.png     sample output of visualise.py
 └── docs/
     ├── subject.org         the spec
     ├── design.org          module-by-module walkthrough

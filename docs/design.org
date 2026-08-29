@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-29 12:04>
+#+lastmod: <2026-08-29 12:11>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -90,7 +90,7 @@ Defines run groups. Imported by [[file:../src/sweep.py][sweep.py]], [[file:../my
 
 ** =BASE_GROUPS=
 
-The four task groups, as =(runs, label)= pairs (see [[file:eegmmidb.org][eegmmidb.org]]). Each group is one task repeated three times, so T1 and T2 keep one meaning across all three runs, which is what allows concatenation. Labels are printed by the sweep.
+The four task groups, as =(runs, label)= pairs. Each group is one task repeated three times, so T1 and T2 keep one meaning across all three runs, which is what allows concatenation. Labels are printed by the sweep.
 
 ** =EXPERIMENTS=
 
@@ -266,11 +266,11 @@ Calls =parse_args(argv)=. Parsed arguments branch program to 3 paths:
 
   Calls =predict(args.subject, args.runs)=.
 
-* [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]]
+* [[file:../visualise.py][visualise.py]]
 
 ** =parse_args(argv)=
 
-Called from =main()=. Same logic as in [[file:~/personal/projects/42/total_perspective_vortex/mybci.py][mybci.py]].
+Called from =main()=. Same logic as in [[file:../mybci.py][mybci.py]].
 
 ** =plot_psd_comparison(raw, filtered, config)=
 
