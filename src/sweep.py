@@ -112,7 +112,8 @@ def run_full_sweep() -> list[float]:
         group_means.append(float(np.mean(accs)) if accs else float("nan"))
         group_counts.append(len(accs))
 
-    print("\nMean accuracy of the six different experiments:")
+    print(f"\nMean accuracy of the six different experiments "
+          f"for all {len(SUBJECTS)} subjects:")
     for exp, (m, n, (_, label)) in enumerate(
             zip(group_means, group_counts, EXPERIMENTS)):
         print(f"experiment {exp}:      accuracy = {m:.4f}  (n={n}, {label})")

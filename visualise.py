@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import mne
 
 from src.data import DEFAULT, PreprocConfig, load_raw, preprocess
-from src.experiments import runs_for
+from src.experiments import SUBJECTS, runs_for
 
 
 ROOT = Path(__file__).resolve().parent
@@ -57,8 +57,9 @@ def parse_args(
 
     args = parser.parse_args(argv)
 
-    if not (1 <= args.subject <= 109):
-        parser.error("subject must be between 1 and 109")
+    if args.subject not in SUBJECTS:
+        parser.error(f"subject must be between {SUBJECTS.start} "
+                     f"and {SUBJECTS.stop - 1}")
 
     try:
         args.runs = runs_for(args.run)

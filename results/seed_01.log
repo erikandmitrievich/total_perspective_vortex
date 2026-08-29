@@ -655,7 +655,7 @@ experiment 5: subject 107: accuracy = 0.5222  (both fists vs both feet (pooled))
 experiment 5: subject 108: accuracy = 0.7111  (both fists vs both feet (pooled))
 experiment 5: subject 109: accuracy = 0.6222  (both fists vs both feet (pooled))
 
-Mean accuracy of the six different experiments:
+Mean accuracy of the six different experiments for all 109 subjects:
 experiment 0:      accuracy = 0.5791  (n=109, left fist vs right fist (executed))
 experiment 1:      accuracy = 0.5723  (n=109, left fist vs right fist (imagined))
 experiment 2:      accuracy = 0.7316  (n=109, both fists vs both feet (executed))

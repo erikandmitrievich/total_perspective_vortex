@@ -2,14 +2,28 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-29>
-#+lastmod: <2026-08-29 11:42>
+#+lastmod: <2026-08-29 12:02>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
 
 * Documentation
 
+- [X] Use fix hardcoded 109 in [[file:~/personal/projects/42/total_perspective_vortex/visualise.py][visualise.py]].
 
+- [ ] Remove =MyCSP.patterns_=.
+
+  - [ ] Remove the code part.
+
+  - [ ] Remove the doc part.
+
+- [ ] Finish infrastructure of [[file:design.org][design.org]].
+
+- [ ] design.org visualise.py broken absolute links. Make relative and update doom config.
+
+- [ ] design.org links docs/eegmmidb.org. Remove.
+
+- [ ] visualise.py has default =subject=1= and =run=6=, while figs has =S001_R3_psd.png=. Replace with default.
 
 * Code Gaps
 
@@ -20,3 +34,9 @@
 - [ ] A small test for [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]]. Load 1 subject, fit =MyCSP= against =mne.decoding.CSP(n_components=4, log=True)= on the same =X, y=. Around 30 lines.
 
 * Cosmetic
+
+- [X] Add =for all 109 subjects:= to CLI.
+
+  - [X] Update CLI.
+
+  - [X] Update the logs.
