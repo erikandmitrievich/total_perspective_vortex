@@ -3,7 +3,6 @@
 
 # latex
 *.aux
-*.log
 *.out
 *.toc
 *.tex

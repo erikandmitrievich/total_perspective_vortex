@@ -1,0 +1,24 @@
+#+title: Todo
+#+author: Erik An
+#+email: obluda2173@gmail.com
+#+date: <2026-08-29>
+#+lastmod: <2026-08-29 10:02>
+#+options: toc:nil num:nil tags:nil
+#+startup: overview inlineimages
+
+
+* Documentation
+
+
+
+* Code Gaps
+
+- [ ] Seed selection. Run on 5 different seeds and give a mean.
+
+  - [ ] Run and store logs.
+
+
+
+- [ ] A small test for [[file:~/personal/projects/42/total_perspective_vortex/src/csp.py][csp.py]]. Load 1 subject, fit =MyCSP= against =mne.decoding.CSP(n_components=4, log=True)= on the same =X, y=. Around 30 lines.
+
+* Cosmetic
