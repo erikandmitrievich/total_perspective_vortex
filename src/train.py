@@ -43,12 +43,14 @@ class FitConfig:
     n_splits : int
         Number of ``StratifiedShuffleSplit`` resamples.
     seed : int
-        Seeds the holdout and the CV both, making a run reproducible.
+        Seeds the holdout and the CV both, making a run reproducible. The
+        sweep does not consume it directly — ``evaluate`` derives one seed
+        per repeat from it.
     """
     n_components: int = 4
     test_size:    float = 0.2
     n_splits:     int = 10
-    seed:         int = 42
+    seed:         int = 4
 
 
 FIT_DEFAULT = FitConfig()

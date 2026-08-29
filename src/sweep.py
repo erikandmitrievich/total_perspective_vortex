@@ -2,9 +2,15 @@
 The 109-subject, six-experiment sweep.
 
 Routes through ``fit_pipeline`` and ``score_stream`` rather than ``train``
-and ``predict``: a sweep cell is then the same number as a CLI run, minus
-the disk round trip.
+and ``predict``, so no cell touches the disk.
+
+A cell is not the same number as a CLI run: ``predict`` scores one holdout
+at ``FitConfig.seed``, a cell averages ``N_REPEATS`` holdouts drawn from
+seeds derived from it. The two answer different questions — one number for
+one split, versus an estimate of the expected accuracy over splits.
 """
+
+from dataclasses import replace
 
 import numpy as np
 
@@ -14,19 +20,30 @@ from src.predict import score_stream
 from src.train import FIT_DEFAULT, FitConfig, fit_pipeline
 
 
+N_REPEATS = 5
+"""
+Holdout draws averaged per sweep cell.
+"""
+
+
 def evaluate(
         subject: int,
         runs: list[int],
         config: PreprocConfig = DEFAULT,
         fit: FitConfig = FIT_DEFAULT,
+        *,
+        n_repeats: int = N_REPEATS,
 ) -> float:
     """
     Train and score one subject/experiment cell of the sweep.
 
-    Mirrors ``train`` + ``predict`` without touching the disk: the fitted
-    estimator and the split stay in memory and are discarded after
-    scoring. The CV scores from ``fit_pipeline`` are dropped — the sweep
-    reports held-out accuracy only.
+    Fits ``n_repeats`` times on ``n_repeats`` stratified holdouts of the
+    same epochs and averages the held-out accuracies. Nothing is
+    persisted: each estimator is discarded after scoring, and the CV
+    scores from ``fit_pipeline`` are never requested.
+
+    ``load_dataset`` runs once for all repeats — the EDF read and the
+    band-pass dominate the cost, so the repeats are close to free.
 
     Parameters
     ----------
@@ -37,17 +54,28 @@ def evaluate(
     config : PreprocConfig
         Preprocessing parameters.
     fit : FitConfig
-        Split and estimator parameters.
+        Split and estimator parameters. ``fit.seed`` is not the split seed
+        here: it seeds the derivation of one seed per repeat, so every cell
+        draws its own splits and the whole sweep stays reproducible from
+        one number.
+    n_repeats : int
+        Holdout draws to average over.
 
     Returns
     -------
     acc : float
-        Held-out accuracy for this cell.
+        Mean held-out accuracy across the repeats.
     """
     X, y, _ = load_dataset(subject, runs, config)
-    clf, _, test_idx, _ = fit_pipeline(X, y, fit, cross_validate=False)
-    acc = score_stream(clf, X, y, test_idx, verbose=False)
-    return acc
+
+    accs = []
+    for k in range(n_repeats):
+        seed = (fit.seed * 100_003 + subject * 101 + k) % (2**31 - 1)
+        clf, _, test_idx, _ = fit_pipeline(X, y, replace(fit, seed=seed),
+                                           cross_validate=False)
+        accs.append(score_stream(clf, X, y, test_idx, verbose=False))
+
+    return float(np.mean(accs))
 
 
 def run_full_sweep() -> list[float]:
@@ -65,6 +93,8 @@ def run_full_sweep() -> list[float]:
     """
     group_means, group_counts, failures = [], [], []
 
+    print(f"sweep: seed={FIT_DEFAULT.seed}, n_repeats={N_REPEATS}, "
+          f"{len(SUBJECTS)} subjects x {len(EXPERIMENTS)} experiments\n")
     for exp, (runs, label) in enumerate(EXPERIMENTS):
         accs = []
         for subject in SUBJECTS:

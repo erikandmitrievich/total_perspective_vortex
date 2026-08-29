@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-28 14:12>
+#+lastmod: <2026-08-29 10:48>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -224,9 +224,15 @@ Gets a model path from =subject= and =runs= (and checks path existence). Loads t
 
 Brings everything together and outputs — this is what discharges the 60% requirement. Unlike =train= -> =predict=, goes through =fit_pipeline= -> =score_stream=, dodging the disk round trip.
 
-** =evaluate(subject, runs, config, fit)=
+A cell is not reproducible from the CLI. =predict= scores one holdout at =FitConfig.seed=; a cell averages =N_REPEATS= holdouts drawn from seeds derived from it. Same pipeline, different estimator.
 
-Loads epochs and labels under given config. Fits pipeline with =cross_validate=False= (the sweep reports held-out accuracy only) and runs score stream with =verbose=False= (without saving a model). Gets and returns =acc=.
+** =N_REPEATS=
+
+Holdout draws averaged per cell. A cell holds out ~9 of ~45 epochs, so one draw is quantised to 1/9 and depends heavily on which epochs it took. Five draws shrink that; they share the same epochs, so the gain is smaller than independent sampling would give.
+
+** =evaluate(subject, runs, config, fit, *, n_repeats)=
+
+Loads epochs and labels under the given config, once for all repeats. Then per repeat: derives a seed from =fit.seed=, =subject= and the repeat index, fits with =cross_validate=False= (the sweep reports held-out accuracy only), scores with =verbose=False=. Returns the mean over repeats.
 
 ** =run_full_sweep()=
 
