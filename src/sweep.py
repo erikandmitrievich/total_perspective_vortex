@@ -125,4 +125,10 @@ def run_full_sweep() -> list[float]:
         for exp, subject, err in failures:
             print(f"  experiment {exp}, subject {subject:03d}: {err}")
 
+    if not any(group_counts):
+        raise RuntimeError(
+            f"every cell failed ({len(failures)} of "
+            f"{len(SUBJECTS) * len(EXPERIMENTS)}); is the dataset available?"
+        )
+
     return group_means

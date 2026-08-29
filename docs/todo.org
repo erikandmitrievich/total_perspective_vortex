@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-29>
-#+lastmod: <2026-08-29 15:11>
+#+lastmod: <2026-08-29 16:08>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -54,7 +54,7 @@
 
   - [X] Added to readme.
 
-- [ ] Check error handling.
+- [X] Check error handling.
 
 - [X] Research on possibility of using the flashdrive for EEGMMIDB instead of manual downloading through =eegbci.load_data(...)=.
 

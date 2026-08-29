@@ -94,12 +94,15 @@ def main(
     mne.set_log_level("ERROR")
 
     args = parse_args(argv)
-    if args.subject is None:
-        run_full_sweep()
-    elif args.mode == "train":
-        train(args.subject, args.runs)
-    else:
-        predict(args.subject, args.runs)
+    try:
+        if args.subject is None:
+            run_full_sweep()
+        elif args.mode == "train":
+            train(args.subject, args.runs)
+        else:
+            predict(args.subject, args.runs)
+    except (FileNotFoundError, RuntimeError) as e:
+        sys.exit(f"mybci.py: {e}")
 
 
 if __name__ == "__main__":

@@ -17,6 +17,9 @@ from src.data import load_dataset
 from src.train import model_path
 
 
+_REQUIRED = frozenset(("pipeline", "config", "train_idx", "test_idx"))
+
+
 def score_stream(
         clf: Pipeline,
         X: npt.NDArray[np.float64],
@@ -114,7 +117,14 @@ def predict(
     if not path.exists():
         raise FileNotFoundError(f"no model at {path}; run `train` first")
 
-    d = joblib.load(path)
+    try:
+        d = joblib.load(path)
+    except Exception as e:
+        raise RuntimeError(f"cannot read model at {path}: {e}") from e
+
+    if not isinstance(d, dict) or not _REQUIRED.issubset(d):
+        raise RuntimeError(f"{path} was not written by `train`; retrain")
+
     X, y, _ = load_dataset(subject, runs, d["config"])
 
     n_expected = len(d["train_idx"]) + len(d["test_idx"])
