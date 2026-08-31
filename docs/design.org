@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-31 10:28>
+#+lastmod: <2026-08-31 10:37>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -49,6 +49,16 @@ argv
        -> per-experiment means -> overall mean
 #+end_example
 
+[[file:../visualise.py][visualise.py]] is a second entrypoint on the same front half of that path and stops before the split:
+
+#+begin_example
+argv
+└ parse_args                   subject, run                             visualise.py
+  └ runs_for(3) -> [3, 7, 11]
+    └ load_raw -> raw, preprocess -> filtered                           data.py
+      └ plot_psd_comparison    two PSD panels                           -> figs/
+#+end_example
+
 ** The dataset
 
 #+begin_example
@@ -63,7 +73,7 @@ Runs 1 and 2 (T0) are completely ignored in classification for two reasons:
 
 2. CSP is a two-class method. =fit= solves $S_0 w = \mu (S_0 + S_1) w$ - a generalised eigenproblem on exactly two scatter matrices.
 
-The whole dataset was recorded with 64 channels on BCI2000. The EDF channel names are not standard, which is what =eegbci.standardize= fixes.
+The whole dataset was recorded with 64 channels on BCI2000. The EDF channel names are not standard, which is what =eegbci.standardize= fixes. Four subjects were recorded at 128 Hz rather than 160 Hz; nothing on the training path depends on the rate, and the only place it surfaces is the =fmax= clip in =plot_psd_comparison=.
 
 ** Why the group, not the run
 
@@ -73,7 +83,11 @@ The other reason is arithmetic: one run holds ~15 T1/T2 events, so its 20% holdo
 
 The pooled experiments are the same argument at six runs — executed and imagined denote identical movements. =runs_for= searches =BASE_GROUPS= only: a run number cannot tell its base group from the pooled experiment containing it.
 
-** Preprocessing decisions that constrain csp.py
+** Preprocessing decisions
+
+*The band is 7-30 Hz.* Mu (8-13) and beta (13-30) are the rhythms that desynchronise over sensorimotor cortex during movement and imagery, so they carry the class difference CSP is looking for. Below mu is drift and ocular artefact, above beta is EMG and line noise, and neither separates left from right. The low edge sits at 7 rather than 8 so the transition band falls outside mu instead of eating its lower half.
+
+*The window is 1-2 s post-onset.* The first second after cue onset is dominated by the evoked response to the cue itself, which is common to both classes and therefore useless to a discriminative method. ERD develops over the second that follows, so that is the second we keep. One second is also enough samples that the per-epoch contribution to the concatenated covariance is not degenerate.
 
 *No re-referencing.* CSP is invariant under invertible maps of the channel axis, so a re-reference is a no-op at best. CAR is worse: it drops =S_0 + S_1= to rank $C-1$, and the Cholesky step inside =eigh= ceases to exist. The failure is silent — eigenvalues outside $[0,1]$ and a =complex128= filter matrix, no exception. See "Why no re-referencing" in [[file:csp.org][csp.org]].
 
@@ -134,7 +148,7 @@ The EEG layer. Everything in [[file:../src/data.py][data.py]] that is not arithm
 - =channels.make_standard_montage=: Attaches the electrode positions named by =PreprocConfig.montage=.
 - =datasets.eegbci=: Resolves subject and run numbers to local EDF paths, fetching on first use, and standardises channel names.
 - =io.read_raw_edf=: Reads one run file into a =Raw=.
-- =io.concatenate_raws=: Joins the three runs of a group into a single =Raw=. Legitimate only because T1 and T2 keep one meaning across the group (see =BASE_GROUPS=).
+- =io.concatenate_raws=: Joins the three runs of a group into a single =Raw=.
 
 ** numpy
 
@@ -163,7 +177,7 @@ Supplies the estimator contract =MyCSP= implements, the classifier behind it, an
 
 ** joblib
 
-Serialises the fitted pipeline and its provenance to =model_path(...)= in =train=, and reads it back in =predict=. The only disk round trip in the project, and the reason =sweep= bypasses both.
+Serialises the fitted pipeline and its provenance to =model_path(...)= in =train=, and reads it back in =predict=. The only disk round trip in the project.
 
 ** matplotlib
 
@@ -173,23 +187,23 @@ Imported by [[file:../visualise.py][visualise.py]] only; nothing on the training
 
 * [[file:../src/experiments.py][experiments.py]]
 
-Defines run groups. Imported by [[file:../src/sweep.py][sweep.py]], [[file:../mybci.py][mybci.py]] and [[file:../visualise.py][visualise.py]].
+Defines run groups. Imported by [[file:../src/sweep.py][sweep.py]], [[file:../mybci.py][mybci.py]] and [[file:../visualise.py][visualise.py]]; imports nothing.
 
 ** =BASE_GROUPS=
 
-The four task groups, as =(runs, label)= pairs. Each group is one task repeated three times, so T1 and T2 keep one meaning across all three runs, which is what allows concatenation. Labels are printed by the sweep.
+The four task groups, as =(runs, label)= pairs. Each group is one task repeated three times. Labels are printed by the sweep.
 
 ** =EXPERIMENTS=
 
-Defines experiments for =run_full_sweep()=. Just adds additional two experiments on top of base groups, each pairing an executed group with its imagined counterpart.
+The sweep's iteration order: the four base groups plus two pooled entries, each pairing an executed group with its imagined counterpart.
 
 ** =SUBJECTS=
 
-Merely a range of subjects. Exists for coherence: both CLIs validate against it, =run_full_sweep()= iterates it.
+The subject range. Both CLIs validate against it and =run_full_sweep()= iterates it.
 
 ** =runs_for(run)=
 
-Expands =run= to =runs=: =3= -> =[3, 7, 11]=. One run is not a binary problem on its own, the group is the training unit. Called by [[file:../mybci.py][mybci.py]] (=train=, =predict=) and [[file:../visualise.py][visualise.py]].
+Expands a run to its group: =3= -> =[3, 7, 11]=. Searches =BASE_GROUPS= only, and raises =ValueError= on anything else. Called by [[file:../mybci.py][mybci.py]] and [[file:../visualise.py][visualise.py]].
 
 * [[file:../src/data.py][data.py]]
 
@@ -199,66 +213,64 @@ Where the data comes from.
 
 Default preprocessing parameters.
 
-- =l_freq=: lower bound useful frequency
-- =h_freq=: upper bound useful frequency
-- =tmin=: start of the feature window, 1 s post-onset
-- =tmax=: end of the feature window, 2 s post-onset
-- =montage=: standard electrode layout, attached for channel positions
-- =fir_design=: FIR design forwarded to =Raw.filter=
+- =l_freq=: 7 Hz, low edge of the band
+- =h_freq=: 30 Hz, high edge
+- =tmin=: 1 s post-onset, start of the feature window
+- =tmax=: 2 s post-onset, end of it
+- =montage=: standard electrode layout, resolved by =make_standard_montage=
+- =fir_design=: =firwin=, forwarded to =Raw.filter=
 
 ** =DEFAULT=
 
-Just a default instance of =PreprocConfig=.
+The default instance, and the config =train= persists into the model file.
 
 ** =EVENT_ID=
 
-Events code, pinned: T1 -> 1, T2 -> 2.
+Event codes, pinned: T1 -> 1, T2 -> 2. Pinned rather than inferred so the mapping cannot shift with the annotation order of a given run.
 
 ** =load_raw(subject, runs, *, path)=
 
-Gets raw file names of subject's runs (=raw_fnames=). Reads and concatenates raw data from =raw_fnames= to =raw=. Returns =raw=. No filtering, so it also serves the "before" panel of the PSD figure.
+Resolves the group's EDF paths, reads each, and concatenates them into one =Raw=. Returns it unfiltered, which is also what the "before" panel of the PSD figure needs.
 
 ** =preprocess(raw, config)=
 
-Makes a copy of a =raw=, calls it =filtered=. Standardizes, sets a montage, and applies a filter. Returns =filtered=.
+Copies, standardises channel names, attaches the montage, band-passes. The copy is what lets [[file:../visualise.py][visualise.py]] hold raw and filtered side by side.
 
 ** =make_epochs(filtered, config)=
 
-Selects solely eeg from filtered, calls it =picks=. Gets the =events= via =events_from_annotations= with the pinned =EVENT_ID=. Creates epochs. Returns them.
+Picks EEG channels, reads events via =events_from_annotations= under the pinned =EVENT_ID=, and cuts the =tmin=/=tmax= window around each.
 
 ** =_labels_from_events(epochs)=
 
-Just returns shifted event labels to comply with project notation.
+Shifts the event codes 1/2 down to labels 0/1.
 
 ** =load_dataset(subject, runs, config, *, path)=
 
-Gets =raw=. Preprocesses and epochs it. Returns =X= (epochs as array), =y= (labels) and epochs (epochs as object).
+The three calls above in order. Returns =X= (epochs as array), =y= (labels), and the =Epochs= object for figures.
 
 * [[file:../src/csp.py][csp.py]]
 
-Heart of project. A from scratch implementation of CSP dimensionality reduction algorithm.
+Heart of project. A from scratch implementation of CSP.
 
 ** =MyCSP(BaseEstimator, TransformerMixin)=
 
-A class, inherits from =BaseEstimator= and =TransformerMixin=.
+Inherits for the sklearn contract, not for behaviour: =BaseEstimator= supplies the =get_params=/=set_params= that let =cross_val_score= clone the step, =TransformerMixin= supplies =fit_transform= for =Pipeline=. See the sklearn entry under Externals.
 
 *** =__init__(n_components, log)=
 
-Initialises self attributes from given arguments.
+Stores both parameters unchanged. No computation, no validation — the sklearn contract requires =__init__= to assign its arguments and nothing else, so the checks live in =fit=.
 
 *** =_covariance(X)=
 
-Gets the number of channels (=n_channels=). Reshapes the 3D tensor from =(epochs, channels, time)= to a 2D matrix of shape =(channels, epochs * time)= through tensor transposition and flattening. This concatenates the time-series of all epochs. Calculates covariance matrix (see "Concatenation estimator" from [[file:csp.org][csp.org]]).
+Reshapes the 3D tensor from =(epochs, channels, time)= to =(channels, epochs * time)= by transposition and flattening, concatenating the time-series of all epochs, then forms the covariance. Never centres — see "Preprocessing decisions" above and "Concatenation estimator" in [[file:csp.org][csp.org]].
 
 *** =fit(X, y)=
 
-Validates =n_components= is even and =classes= count being exactly 2. Assigns =self.classes_=, and calculates covariance matrices for different classes (=S_0=, =S_1=). Calls =eigh(S_0, S_0 + S_1)= and obtains eigenvalues and eigenvectors: =eigvals=, =eigvecs= (see "Why =eigh= is the right solver" from [[file:csp.org][csp.org]]). Stores descendingly ordered eigenvalues and eigenvectors in =self.eigvals_= and =self.filters_= (=self.filters_= holds the eigenvectors as rows; see "Convention warning" from [[file:csp.org][csp.org]]).
-
-Summing up, it calculates filter matrix which will be used to reduce dimensionality of raw epoch data. It's the main function of CSP.
+Validates that =n_components= is even and that exactly two classes are present, then estimates =S_0= and =S_1= and solves =eigh(S_0, S_0 + S_1)= (see "Why =eigh= is the right solver"). Stores the eigenvalues descending in =self.eigvals_= and the corresponding eigenvectors as rows of =self.filters_= (see "Convention warning"). This is the whole of CSP: everything downstream is a projection onto those rows.
 
 *** =transform(X)=
 
-Verifies the model is fitted using =check_is_fitted(self)= (which ensures the required learned attributes exist). Selects the leftmost and rightmost filters, as they produce the most discriminative variance between the two classes. Projects the raw data onto these selected filters (resulting in =X_prj=). Calculates the =features= array of shape =(n_epochs, n_components)=, where each value essentially represents the energy (variance) of the filtered brain activity for one component of one epoch. Finally, if =self.log= is set to =True=, a log transformation is applied to the features to compress extreme spikes and create a normal (bell-curve) distribution, which is much easier for linear classifiers to process. Returns features.
+Guards on =check_is_fitted=, then projects each epoch onto the outermost =n_components/2= filter pairs — the extremes of the spectrum, where the variance ratio between the two classes is largest — and returns the per-component variance, shape =(n_epochs, n_components)=. If =log=, takes the log of those variances: they are heavy-tailed by construction, and LDA is linear, so the compression is what makes them separable by it.
 
 * [[file:../src/train.py][train.py]]
 
@@ -266,34 +278,28 @@ Where training happens.
 
 ** =FitConfig=
 
-Stores default split and estimator parameters used for training and sweep.
+Default split and estimator parameters, shared by =train= and the sweep.
 
-- =n_components= is responsible for the number of filters to be applied.
-- =test_size= for the holdout fraction and the validation fraction inside each cv split.
-- =n_splits= for number of validation tests.
-- =seed= is the seed used for reproducibility.
+- =n_components=: filters kept by =transform=, half from each end of the spectrum. Even by construction; =fit= raises otherwise. TODO: state the default and one line on why that many.
+- =test_size=: the holdout fraction, and the validation fraction inside each cv split
+- =n_splits=: number of cross-validation folds
+- =seed=: =random_state= for both the holdout split and the cv object
 
 ** =model_path(subject, runs)=
 
-Uses global =MODELS_DIR= to construct a path to a fitted model. Used in writing and reading fitted models by =train(...)= and =predict(...)=.
+Builds the per-group model path under =MODELS_DIR=. Written by =train=, read by =predict=.
 
 ** =make_pipeline(n_components)=
 
-Just returns the =Pipeline= object. Exists for convenience.
+Returns =Pipeline([MyCSP, LDA])=. Exists so the two call sites cannot drift apart.
 
 ** =fit_pipeline(X, y, fit, *, cross_validate)=
 
-=idx= represent array of indices (of labels). =train_test_split(...)= performs split of indices based on given arguments into train and test.
-
-- =test_size= for training and test ratio
-- =stratify= for keeping the original class ratio
-- =random_state= for random state
-
-Then makes a pipeline. If =cross_validate= is set, makes a cross-validation object (=cv=) and stores accuracy of each fold in =scores=; otherwise =scores= is =None=. And finally, fits the model with =fit(...)= and returns a classifier (=clf=), train indices (=train_idx=), sorted test indices (=test_idx=), and scores.
+Splits =idx= — not =X= — into =train_idx= and =test_idx=, stratified, at =fit.seed=. Builds the pipeline, optionally cross-validates it on the training rows only, then fits it on those rows. Returns =clf=, =train_idx=, sorted =test_idx=, and =scores= (=None= when =cross_validate= is off, which is the sweep's case).
 
 ** =train(subject, runs, config, fit, *, verbose)=
 
-Performs loading of preprocessed epochs and labels (=X=, =y=). Gets classifier, train and test indices, and scores from =fit_pipeline(...)=. Creates a model directory just in case and populates created model (through =joblib.dump(...)=) with the payload; =predict= reads only =pipeline=, =config=, =test_idx= and =len(train_idx)=, the rest is provenance. Then goes =if verbose= condition, necessary for sweep vs train and predict. Returns =scores.mean()=
+Loads the dataset, fits through =fit_pipeline=, and dumps the payload to =model_path(...)=. =predict= reads only =pipeline=, =config=, =test_idx= and =len(train_idx)=; the rest is provenance. =verbose= is off when the sweep calls it. Returns =scores.mean()=.
 
 * [[file:../src/predict.py][predict.py]]
 
@@ -301,17 +307,15 @@ Where a persisted model meets its held-out partition.
 
 ** =score_stream(clf, X, y, test_idx, *, verbose)=
 
-Enters a for loop of test indices. Measures start time, stores predicted class for =X[i]= to =preds=, measures end time, and stores time delta in =latencies= per chunk (implemented to comply subject's requirements of <2s latency per chunk). Prepares and compares predictions versus truths, calculates the mean. =if verbose= (for =predict= mode) prints subject's outlined CLI table. Returns accuracy.
+Predicts one epoch at a time, timing each call, so the per-chunk bound the spec asks for is measured rather than asserted. Compares predictions to truths and returns the mean. Under =verbose= it also prints the table the spec lays out.
 
 ** =predict(subject, runs, *, verbose)=
 
-Gets a model path from =subject= and =runs= (and checks path existence). Loads the model to =d=. Loads =X=, =y= from dataset (reloads unders persisted from model config). Checks model loaded indices length matches dataset loaded truth length (prevents different epochs comparison). Runs =score_stream= and returns accuracy.
+Checks the model file exists, loads it, and reloads the dataset under the persisted =config= rather than the current default. Verifies the index range against the reloaded labels, so a model can never be scored against a different set of epochs. Runs =score_stream= and returns its accuracy.
 
 * [[file:../src/sweep.py][sweep.py]]
 
-Brings everything together and outputs — this is what discharges the 60% requirement. Unlike =train= -> =predict=, goes through =fit_pipeline= -> =score_stream=, dodging the disk round trip.
-
-A cell is not reproducible from the CLI. =predict= scores one holdout at =FitConfig.seed=; a cell averages =N_REPEATS= holdouts drawn from seeds derived from it. Same pipeline, different estimator.
+The 109-subject evaluation. This is what discharges the 60% requirement.
 
 ** =N_REPEATS=
 
@@ -319,13 +323,13 @@ Holdout draws averaged per cell. A cell holds out ~9 of ~45 epochs, so one draw 
 
 ** =evaluate(subject, runs, config, fit, *, n_repeats)=
 
-Loads epochs and labels under the given config, once for all repeats. Then per repeat: derives a seed from =fit.seed=, =subject= and the repeat index, fits with =cross_validate=False= (the sweep reports held-out accuracy only), scores with =verbose=False=. Returns the mean over repeats.
+Loads epochs and labels once for all repeats. Per repeat: derives a seed from =(fit.seed, subject, repeat)=, fits with =cross_validate=False=, scores with =verbose=False=. Returns the mean over repeats.
 
 ** =run_full_sweep()=
 
-Goes through each experiment, always on defaults. For each experiment calculates accuracy of each subject, prints it out. Calculates the mean accuracy per experiment, prints it as well. Calculates mean accuracy across experiments, prints it as well.
+Iterates =EXPERIMENTS= over =SUBJECTS= on defaults, printing each cell, then the per-experiment mean, then the mean across experiments. Returns the per-experiment means.
 
-Each cell is wrapped in =try/except=, so one bad subject cannot kill the run; failures are printed at the end and the experiment mean is taken over successful cells only, hence the =n== in the output. Returns the per-experiment means as a list.
+Each cell is wrapped in =try/except=, so one bad subject cannot kill the run; failures are printed at the end and the experiment mean is taken over successful cells only, hence the =n== in the output.
 
 * [[file:../mybci.py][mybci.py]]
 
@@ -333,36 +337,24 @@ An entrypoint of the project.
 
 ** =parse_args(argv)=
 
-Is called from =main()=. Main purpose is to parse the given =argv=.
-
-Creates an object =parser= (from module =argparse=). Defines arguments with validation and constraints (relative to subject, run, and mode). Parses according to outlined parser configuration (=parser.parse_args(argv)=). Goes through another validation step: subject against =SUBJECTS=, and run by membership in a =BASE_GROUPS= entry — delegated to =runs_for=, whose =ValueError= is surfaced as a usage error. Stores the resolved group in =args.runs=. Returns parsed arguments.
+Defines the flags and their constraints, parses, then validates twice more: =subject= against =SUBJECTS=, and =run= by delegating to =runs_for=, whose =ValueError= is surfaced as an argparse usage error. Stores the resolved group in =args.runs=.
 
 ** =main(argv)=
 
-Calls =parse_args(argv)=. Parsed arguments branch program to 3 paths:
-
-- =args.subject == None=
-
-  Calls =run_full_sweep()=.
-
-- =args.mode == "train"=
-
-  Calls =train(args.subject, args.runs)=.
-
-- =args.mode == "predict"=
-
-  Calls =predict(args.subject, args.runs)=.
+Branches on the parsed arguments: no =subject= runs the full sweep, otherwise =mode= selects =train= or =predict= on =(args.subject, args.runs)=.
 
 * [[file:../visualise.py][visualise.py]]
 
+The PSD figure. Off the training path entirely.
+
 ** =parse_args(argv)=
 
-Called from =main()=. Same logic as in [[file:../mybci.py][mybci.py]].
+Same validation as [[file:../mybci.py][mybci.py]], without =mode=.
 
 ** =plot_psd_comparison(raw, filtered, config)=
 
-Clips =fmax=. Draws the raw and filtered PSDs into two stacked axes, marks the band edges, then unions the y-limits across both so the stopband depth is readable. Returns =fig=.
+Clips =fmax= to Nyquist, which matters only for the four 128 Hz subjects. Draws the raw and filtered PSDs into two stacked axes, marks the band edges, then unions the y-limits across both so the stopband depth is readable. Returns =fig=.
 
 ** =main(argv)=
 
-Parses arguments, loads =raw=, preprocesses it to =filtered=, builds the figure and writes it to =figs/=. Returns the path.
+Parses, loads =raw=, preprocesses to =filtered=, builds the figure and writes it to =figs/=. Returns the path.
