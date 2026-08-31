@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-31 10:37>
+#+lastmod: <2026-08-31 10:43>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -280,7 +280,7 @@ Where training happens.
 
 Default split and estimator parameters, shared by =train= and the sweep.
 
-- =n_components=: filters kept by =transform=, half from each end of the spectrum. Even by construction; =fit= raises otherwise. TODO: state the default and one line on why that many.
+- =n_components=: filters kept by =transform=, half from each end of the spectrum. Even by construction; =fit= raises otherwise.
 - =test_size=: the holdout fraction, and the validation fraction inside each cv split
 - =n_splits=: number of cross-validation folds
 - =seed=: =random_state= for both the holdout split and the cv object
