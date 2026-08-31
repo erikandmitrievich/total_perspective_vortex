@@ -2,13 +2,72 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-29 12:11>
+#+lastmod: <2026-08-31 09:10>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
 * Infrastructure
 
-Deferred until the per-module descriptions are complete.
+#+begin_example
+argv
+└ parse_args                   subject, run, mode                       mybci.py
+  └ runs_for(3) -> [3, 7, 11]                                           experiments.py
+    │
+    ├─ train ───────────────────────────────────────────────────        train.py
+    │  └ load_dataset                                                   data.py
+    │      load_raw            3 EDF -> Raw           64 ch, 160 Hz
+    │      preprocess          Raw -> Raw             8-30 Hz, montage
+    │      make_epochs         Raw -> Epochs          tmin=1, tmax=2
+    │      _labels_from_events                        y in {0,1}
+    │    -> X (n_epochs, 64, n_times), y (n_epochs,)
+    │  └ fit_pipeline
+    │      train_test_split    idx -> train_idx, test_idx               stratified
+    │      Pipeline([MyCSP, LDA])                                       csp.py
+    │        MyCSP.fit         S_0, S_1 (64,64) -> filters_ (64,64)
+    │        MyCSP.transform   (n, 64, t) -> (n, n_components)          log variance
+    │        LDA               (n, n_components) -> y_hat
+    │      cross_val_score     -> scores                                n_splits folds
+    │  └ joblib.dump           pipeline, config, test_idx               models/
+    │  -> scores.mean()
+    │
+    ├─ predict ─────────────────────────────────────────────────        predict.py
+    │  └ joblib.load           pipeline, config, test_idx               models/
+    │  └ load_dataset          under the persisted config               -> X, y
+    │  └ score_stream          for i in test_idx
+    │      pipeline.predict    X[i] -> preds[i]                         timed, < 2 s
+    │  -> accuracy
+    │
+    └─ sweep (no --subject) ────────────────────────────────────        sweep.py
+       └ for experiment in EXPERIMENTS, for subject in SUBJECTS
+         └ evaluate
+             load_dataset      once for all repeats                     -> X, y
+             N_REPEATS x
+               seed(fit.seed, subject, repeat)
+               fit_pipeline    cross_validate=False                     no disk
+               score_stream    verbose=False
+             -> mean over repeats
+       -> per-experiment means -> overall mean
+#+end_example
+
+** The dataset
+
+[T0/T1/T2 annotations; why only T1/T2 become classes; 64 channels at 160 Hz and the four 128 Hz subjects; what one run contains and why that matters below.]
+
+** Why the group, not the run
+
+[runs_for expands 3 -> [3,7,11]; ~15 trials per class becomes ~45; T1/T2 hold one meaning across the three runs, which is what makes concatenate_raws legal.]
+
+** Preprocessing decisions that constrain csp.py
+
+[No CAR: it makes the covariance rank-deficient and breaks the Cholesky step inside scipy.linalg.eigh. Acausal zero-phase FIR: offline replay, not a deployed causal buffer; label-independent, so not leakage. Both are data.py choices answerable only to csp.py — link csp.org rather than restating.]
+
+** Where the leakage boundary is
+
+[Split partitions idx, not arrays. MyCSP sits inside Pipeline, so covariances see training folds only. test_idx persisted so predict replays the identical partition. Filtering precedes the split and is label-independent.]
+
+** Which number is the accuracy
+
+[Three exist: cross-validation fold mean (train), streamed holdout (predict), N_REPEATS mean per cell (sweep). State which one carries the 60% claim and that they are not interchangeable. Cross-reference the results table.]
 
 * Builtins
 
