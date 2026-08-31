@@ -2,7 +2,7 @@
 #+author: Erik An
 #+email: obluda2173@gmail.com
 #+date: <2026-08-26>
-#+lastmod: <2026-08-31 09:10>
+#+lastmod: <2026-08-31 10:28>
 #+options: toc:nil num:nil tags:nil
 #+startup: overview inlineimages
 
@@ -16,7 +16,7 @@ argv
     ├─ train ───────────────────────────────────────────────────        train.py
     │  └ load_dataset                                                   data.py
     │      load_raw            3 EDF -> Raw           64 ch, 160 Hz
-    │      preprocess          Raw -> Raw             8-30 Hz, montage
+    │      preprocess          Raw -> Raw             7-30 Hz, montage
     │      make_epochs         Raw -> Epochs          tmin=1, tmax=2
     │      _labels_from_events                        y in {0,1}
     │    -> X (n_epochs, 64, n_times), y (n_epochs,)
@@ -51,23 +51,51 @@ argv
 
 ** The dataset
 
-[T0/T1/T2 annotations; why only T1/T2 become classes; 64 channels at 160 Hz and the four 128 Hz subjects; what one run contains and why that matters below.]
+#+begin_example
+runs: 1, 2                 T0 = baselines (eyes open, eyes closed)
+runs: 3, 4, 7, 8, 11, 12   T1 = left fist, T2 = right fist
+runs: 5, 6, 9, 10, 13, 14  T1 = both fists, T2 = both feet
+#+end_example
+
+Runs 1 and 2 (T0) are completely ignored in classification for two reasons:
+
+1. T0 is not a condition, it's the absence of one. A rest-vs-task classifier is a different (and much easier) problem than left-vs-right.
+
+2. CSP is a two-class method. =fit= solves $S_0 w = \mu (S_0 + S_1) w$ - a generalised eigenproblem on exactly two scatter matrices.
+
+The whole dataset was recorded with 64 channels on BCI2000. The EDF channel names are not standard, which is what =eegbci.standardize= fixes.
 
 ** Why the group, not the run
 
-[runs_for expands 3 -> [3,7,11]; ~15 trials per class becomes ~45; T1/T2 hold one meaning across the three runs, which is what makes concatenate_raws legal.]
+=runs_for= expands a run number to the three runs of its =BASE_GROUPS= entry: =3= -> =[3, 7, 11]=. T1 and T2 mean one thing across those three, which is what makes =concatenate_raws= legal. Concatenating =3= with =5= would redefine T1 from "left fist" to "both fists" and produce labels that no longer name one problem.
+
+The other reason is arithmetic: one run holds ~15 T1/T2 events, so its 20% holdout is 3 epochs. Three runs give ~45 epochs, ~22 per class, ~9 held out. The group is the smallest unit a stratified split means anything on.
+
+The pooled experiments are the same argument at six runs — executed and imagined denote identical movements. =runs_for= searches =BASE_GROUPS= only: a run number cannot tell its base group from the pooled experiment containing it.
 
 ** Preprocessing decisions that constrain csp.py
 
-[No CAR: it makes the covariance rank-deficient and breaks the Cholesky step inside scipy.linalg.eigh. Acausal zero-phase FIR: offline replay, not a deployed causal buffer; label-independent, so not leakage. Both are data.py choices answerable only to csp.py — link csp.org rather than restating.]
+*No re-referencing.* CSP is invariant under invertible maps of the channel axis, so a re-reference is a no-op at best. CAR is worse: it drops =S_0 + S_1= to rank $C-1$, and the Cholesky step inside =eigh= ceases to exist. The failure is silent — eigenvalues outside $[0,1]$ and a =complex128= filter matrix, no exception. See "Why no re-referencing" in [[file:csp.org][csp.org]].
+
+*The band-pass licenses the covariance estimator.* =_covariance= never centres. That is only correct because the 7-30 Hz filter has no DC gain, so the channel means are already ~0. Dropping the high-pass would invalidate the estimator, not just degrade it. See "Zero-mean assumption".
+
+*The filter is acausal.* =firwin= is zero-phase: each output sample depends on input both before and after it. Right for offline analysis, impossible in a deployed causal buffer. Not leakage — the filter is fit to nothing and sees no labels. It does mean =predict= measures per-chunk classification cost, not real-time latency.
 
 ** Where the leakage boundary is
 
-[Split partitions idx, not arrays. MyCSP sits inside Pipeline, so covariances see training folds only. test_idx persisted so predict replays the identical partition. Filtering precedes the split and is label-independent.]
+=fit_pipeline= splits =idx=, not arrays. =X= and =y= stay whole and every stage addresses rows by index, so no copy can drift out of sync with its labels.
+
+=MyCSP= sits inside the =Pipeline=, so =clf.fit(X[train_idx], ...)= estimates =S_0=, =S_1= and =filters_= on training rows only. That is the whole guarantee: CSP fitted outside the pipeline would see all 45 epochs and inflate every number here. =cross_val_score= clones the pipeline and refits CSP per fold, and it only ever receives =X[train_idx]= — the holdout is carved out before it runs.
+
+=train= persists =test_idx= with the =PreprocConfig= it was fitted under, and =predict= reloads under that config rather than the current default. A later edit to =PreprocConfig= cannot silently re-score an old model on different epochs.
 
 ** Which number is the accuracy
 
-[Three exist: cross-validation fold mean (train), streamed holdout (predict), N_REPEATS mean per cell (sweep). State which one carries the 60% claim and that they are not interchangeable. Cross-reference the results table.]
+1. *=train= -> =scores.mean()=.* Mean over 10 validation folds *inside* the training partition. Never touches =test_idx=. A fit-quality number, not a generalisation estimate.
+2. *=predict=.* One accuracy on the ~9 epochs of =test_idx= at =FitConfig.seed=. One draw, quantised to 1/9.
+3. *A sweep cell.* Mean of =N_REPEATS= holdouts at seeds derived from =(fit.seed, subject, repeat)=. Quantised to 1/45.
+
+The 60% claim rests on 3 alone — mean over 109 subjects, then over six experiments; see [[file:../README.md][README.md]] and [[file:../results/][results/]]. So =mybci.py 4 14 predict= will not reproduce that cell: same pipeline and epochs, different splits.
 
 * Builtins
 
